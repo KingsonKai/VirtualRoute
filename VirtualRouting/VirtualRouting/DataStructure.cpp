@@ -1,13 +1,18 @@
 #define SIZE 16
+
 // 基本的地址信息
 class Addr
 {
 public:
-    char name;                 // 如A，B，C，D
+    char name;                 // 如ABCD
     char ipaddress[SIZE];      // IP地址
     Addr(char name, char *ip) {
         strcpy(ipaddress, ip);
         this->name = name;
+    }
+
+    Addr() {
+        name = '1';
     }
 };
 
@@ -40,6 +45,7 @@ public:
     }
 
 };
+
 // 路由器信息
 class route
 {
@@ -61,7 +67,7 @@ public:
     }
 
     void setDumped() {
-        this->dumped = true;
+        this->dumped = true; 
         this->cost = -1;
     }
 };
