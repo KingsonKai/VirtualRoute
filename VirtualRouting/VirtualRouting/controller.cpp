@@ -108,16 +108,32 @@ public:
     void sendResponsePacket();
 
     // 处理接收的包，根据packet类型调用以下三种处理方式
-    void handleRececivedPacket(virtualPacket packet);
+    void handleRececivedPacket(virtualPacket packet) {
+        if (packet.type == 0) {
+            handleNormalPacket(packet);
+        } else if (packet.type == 1) {
+            handleUpdatePacket(packet);
+        } else if (packet.type == 2) {
+            handleHeartBeatPacket(packet);
+        }
+    }
 
     // 处理心跳检测包
-    void handleHeartBeatPacket(virtualPacket packet);
+    void handleHeartBeatPacket(virtualPacket packet) {
+        // 若有收到，回应主机，目前正在工作
+    }
 
     // 处理路由表信息更新包
-    void handleUpdatePacket(virtualPacket packet);
+    void handleUpdatePacket(virtualPacket packet) {
+        // 1. 解析数据包提取信息
+        // 2. 根据提取的信息决定是否要调用算法更新路由表
+        // 3. 如果更新了路由表，要发给邻居一份路由信息
+    }
 
     // 处理普通的包
-    void handleNormalPacket(virtualPacket packet);
+    void handleNormalPacket(virtualPacket packet) {
+
+    }
 
     // 转发报
     void forward(virtualPacket packet);
