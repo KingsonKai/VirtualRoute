@@ -45,7 +45,7 @@ public:
 		};
 		LSalgorithm();//更新路由表
 	}
-	~RouteTableLS();
+	~RouteTableLS() {}
 
 	void LSalgorithm() {// 更新路由表，01234对应ABCDE,已经在构造函数中调用了，不需要线程中再次调用，DV才要调用
 		routetable.clear();
@@ -67,7 +67,7 @@ public:
 					pre[add2name - 'A'] = temp - 'A';
 				}
 			}
-			isVisit[temp] = true;
+			isVisit[temp-'A'] = true;
 		}
 		for (int i = 0; i < hostAddrs.size(); i++) {//是否需要整条路径信息,应该不需要
 			int getStart = hostAddrs[i].name - 'A';
@@ -84,3 +84,5 @@ public:
 		return ("0.0.0.0");//默认返回
 	}
 };
+
+

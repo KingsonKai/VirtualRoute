@@ -1,5 +1,5 @@
 #define SIZE 16
-
+#include<cstring>
 // 基本的地址信息
 class Addr
 {
@@ -7,13 +7,21 @@ public:
     char name;                 // 如ABCD
     char ipaddress[SIZE];      // IP地址
     Addr(char name, char *ip) {
-        strcpy(ipaddress, ip);
+        strcpy_s(ipaddress, ip);
         this->name = name;
     }
 
     Addr() {
         name = '1';
     }
+	bool operator==(Addr other) {
+		if (name == other.name && strcmp(ipaddress, other.ipaddress)) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
 };
 
 // 路由表信息单位
@@ -26,7 +34,7 @@ public:
 
     routeTableEntry(Addr addr, char nexthop[16], int cost) {
         this->addr = addr;
-        strcpy(this->nexthop, nexthop);
+        strcpy_s(this->nexthop, nexthop);
         this->cost = cost;
     }
 };
@@ -38,7 +46,7 @@ public:
     Addr addr1, addr2;
     int cost;
 
-    link(addr1, addr2, int cost) {
+	pathInfo(Addr addr1, Addr addr2, int cost) {
         this->addr1 = addr1;
         this->addr2 = addr2;
         this->cost = cost;
