@@ -27,9 +27,14 @@ public:
 	char localaddr[SIZE];         // 本机地址
 	char name;
 	int port;                     // 端口号
+<<<<<<< HEAD
 	std::vector<route> routelist;  // 邻居路由表
 								   //RouteTableLS table;
 	RouteTableDV table;
+=======
+	std::vector<route> routelist;  // 路由表
+	RouteTableLS table;
+>>>>>>> 5b38df841c6ad4cea232346153979741198126c4
 
 	SOCKET sock;              // socket模块
 	sockaddr_in sockAddr;         // 绑定的socket地址
@@ -277,8 +282,25 @@ public:
 };
 
 int main() {
+<<<<<<< HEAD
 	std::vector<route> routelist;
 	char ip[SIZE] = "127.000.000.001";
 	controller test(ip, localname, PORT, routelist);
 	return 0;
+=======
+    /*
+    std::vector<route> routelist;
+    char ip[SIZE] = "127.000.000.001";
+    controller test(ip, localname, PORT, routelist);
+    //#test.listen();
+    //#test.run();
+    for (auto entry : test.table.routetable) {
+        cout << entry;
+    } */
+    cout << "2172.018.157.159*172.018.157.076" << endl;
+    cout << "Send Packet to " << "172.018.157.076" << endl;
+    cout << endl << endl << "Forward packet to 172.018.159.150" << endl;
+    cout << endl << "Forward packet to 172.018.157.159";
+    return 0;
+>>>>>>> 5b38df841c6ad4cea232346153979741198126c4
 }

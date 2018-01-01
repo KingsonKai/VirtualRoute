@@ -91,9 +91,16 @@ public:
 		type = receivedMessage[0] - '0';
 		strncpy(source.ipaddress, receivedMessage + 1, 15);
 		strncpy(dst.ipaddress, receivedMessage + 17, 15);
+<<<<<<< HEAD
 		source.ipaddress[16] = '\0';
 		dst.ipaddress[16] = '\0';
 		strncpy(message, receivedMessage + 33, strlen(receivedMessage) - 32);
+=======
+		source.ipaddress[15] = '\0';
+		dst.ipaddress[15] = '\0';
+		strncpy(message, receivedMessage + 33, strlen(receivedMessage) - 33);
+		message[strlen(receivedMessage)-33] = 0x00;
+>>>>>>> 5b38df841c6ad4cea232346153979741198126c4
 	}
 
 	// 输出这个包的内容
