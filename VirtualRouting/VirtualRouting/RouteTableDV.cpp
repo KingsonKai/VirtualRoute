@@ -79,7 +79,11 @@ public:
 		myTable[myHostName - 'A'][myHostName - 'A'] = 0;
 	}
 	~RouteTableDV() {}
-	void DValgorithm(vector<vector<int>> anTable, char anHostName) {// 更新路由表，传入的是某个邻居发来的路由表以及它的主机名
+	/*修改*/
+	//char *, vector<int> dis_vector
+	bool DValgorithm(vector<vector<int>> anTable, char anHostName) {// 更新路由表，传入的是某个邻居发来的路由表以及它的主机名
+		vector<vector<int> > origin_table;
+		copy(origin_table, myTable);
 		for (int i = 0; i < 5; i++) {
 			for (int j = 0; j < 5; j++) {
 				if (anTable[i][j] < myTable[i][j]) myTable[i][j] = anTable[i][j];
@@ -122,7 +126,12 @@ public:
 			}
 		}
 
-
+		if (origin_table == myTable) {
+			return false;
+		}
+		else {
+			return true;
+		}
 
 		/*int neighbor_num = 0;
 		for (int neighbor_num = 0; neighbor_num < routetable.size(); neighbor_num++) {
@@ -152,6 +161,16 @@ public:
 			cout << "destName: " << v.addr.name << endl;
 			cout << "NExtIP: " << v.nexthop << endl;
 			cout << "Cost: " << v.cost << endl;
+		}
+	}
+
+	void copy(vector<vector<int>> &v1, vector<vector<int>> &v2) {
+		for (int i = 0; i < v2.size(); i++) {
+			vector<int> temp;
+			for (int j = 0; j < v1.size(); j++) {
+				temp.push_back(v2[i][j]);
+			}
+			v1.push_back(temp);
 		}
 	}
 };

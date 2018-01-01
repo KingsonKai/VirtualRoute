@@ -2,6 +2,8 @@
 #include<iostream>
 #include<map>
 #include<queue>
+#include "DataStructure.cpp"
+#include<iterator>
 using namespace std;
 class RouteTableLS
 {
@@ -94,6 +96,54 @@ public:
                 return addr.name;
         }
 	}
+	bool setdown(Addr a) {
+		bool is = false;
+		for (int i = 0; i < hostAddrs.size(); i++) {
+			if (hostAddrs[i] == a) {
+				is = true;
+				break;
+			}
+		}
+		//当is为false的时候，代表已经down掉了a这个主机，所以直接返回不需要修改即可，当为true的时候，代表需要down调主机a并且更新路由表
+		if (is == false) return is;
+		//将路由表清空
+		vector <routeTableEntry>().swap(routetable);
+		vector<Addr>::iterator it;
+		//在地址的映射中去掉主机a
+		for (it = hostAddrs.begin(); it != hostAddrs.begin(); it++) {
+			if (*it == a) {
+				hostAddrs.erase(it);
+				break;
+			}
+		}
+		//
+		map<char, vector<pathInfo>>::iterator iter_delete = networkGraph.find(a.name);
+		map<char, vector<pathInfo>>::iterator iter;
+		networkGraph.erase(iter_delete);
+		for (iter = networkGraph.begin(); iter != networkGraph.end(); iter++) {
+			vector<pathInfo>::iterator iter1;
+			for (iter1 = iter->second.begin(); iter1 != iter->second.end(); ) {
+				if (iter1->addr2 == a) {
+					iter->second.erase(iter1);
+				}
+				else {
+					iter1++;
+				}
+			}
+		}
+		LSalgorithm();
+		return is;
+	}
+
+	vector<Addr> getNeighbors() {
+		vector<Addr> my_neighbors;
+		for (int i = 0; i < networkGraph[myHostName].size(); i++) {
+			my_neighbors.push_back(networkGraph[myHostName][i].addr2);
+		}
+		return my_neighbors;
+	}
+
+
 };
 
 
