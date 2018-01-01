@@ -86,7 +86,6 @@ public:
 		dst.ipaddress[15] = '\0';
 		strncpy(message, receivedMessage + 33, strlen(receivedMessage) - 33);
 		message[strlen(receivedMessage)-33] = 0x00;
-		cout << strlen(message) << endl;
 	}
 
 	// 输出这个包的内容

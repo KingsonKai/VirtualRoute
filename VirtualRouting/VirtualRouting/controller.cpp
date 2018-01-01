@@ -25,7 +25,7 @@ public:
 	char localaddr[SIZE];         // 本机地址
     char name;
 	int port;                     // 端口号
-	std::vector<route> routelist;  // 邻居路由表
+	std::vector<route> routelist;  // 路由表
 	RouteTableLS table;
 
 	SOCKET sock;              // socket模块
@@ -62,7 +62,7 @@ public:
 			int ret = recvfrom(sock, recvBuf, MAXBYTE, 0, (SOCKADDR*)&addrClient, &nSize);
 			if (ret > 0) {
                 recvBuf[ret] = 0x00;
-                //cout << inet_ntoa(addrClient.sin_addr) << endl; 获取另一端的IP地址
+                cout << inet_ntoa(addrClient.sin_addr) << endl; 获取另一端的IP地址
                 handleReceivedPacket(recvBuf);
 			}
 			// getPack or forward packet
