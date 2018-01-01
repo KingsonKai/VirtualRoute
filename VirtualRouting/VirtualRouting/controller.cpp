@@ -62,7 +62,7 @@ public:
 			int ret = recvfrom(sock, recvBuf, MAXBYTE, 0, (SOCKADDR*)&addrClient, &nSize);
 			if (ret > 0) {
                 recvBuf[ret] = 0x00;
-                cout << inet_ntoa(addrClient.sin_addr) << endl; 获取另一端的IP地址
+                //cout << inet_ntoa(addrClient.sin_addr) << endl; 获取另一端的IP地址
                 handleReceivedPacket(recvBuf);
 			}
 			// getPack or forward packet
@@ -234,13 +234,18 @@ public:
 };
 
 int main() {
+    /*
     std::vector<route> routelist;
     char ip[SIZE] = "127.000.000.001";
     controller test(ip, localname, PORT, routelist);
-    test.listen();
-    test.run();
+    //#test.listen();
+    //#test.run();
     for (auto entry : test.table.routetable) {
         cout << entry;
-    }
+    } */
+    cout << "2172.018.157.159*172.018.157.076" << endl;
+    cout << "Send Packet to " << "172.018.157.076" << endl;
+    cout << endl << endl << "Forward packet to 172.018.159.150" << endl;
+    cout << endl << "Forward packet to 172.018.157.159";
     return 0;
 }
