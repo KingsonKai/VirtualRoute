@@ -7,11 +7,12 @@ public:
 	char message[MAXBYTE];
 	char recvBuf[MAXBYTE];
 
-	virtualPacket(int type, Addr source, Addr dst, char *message) {
+	virtualPacket(int type, Addr source, Addr dst, char *content) {
 		this->type = type;
 		this->source = source;
 		this->dst = dst;
-		strcpy(this->message, message);
+		if (content != NULL)
+            strcpy(this->message, content);
 	}
 
 	virtualPacket() {
@@ -22,11 +23,11 @@ public:
 	// sendMessage是指针，复制后内容会改变，在路由器模块中就能接收到消息
 
 	// 根据要发送的message，构建好字符流，调用strncpy复制到sendMessage中
-	void constructNormalPacket(char *sendMessage, char* message) {
+	void constructNormalPacket(char *sendMessage, char* content) {
 		sendMessage[0] = '0';
 		writeAddress(sendMessage + 1);
-		strncpy(sendMessage + 33, message, strlen(message));
-		sendMessage[33 + strlen(sendMessage)] = '\0';
+		strncpy(sendMessage + 33, message, strlen(content));
+		sendMessage[33 + strlen(content)] = '\0';
 	}
 
 	// 打包路由表信息
@@ -46,23 +47,25 @@ public:
 			routeMessage[strlen(routeMessage) + 1] = '*';
 		}
 		strncpy(sendMessage + 33, routeMessage, strlen(routeMessage));
-		sendMessage[33 + strlen(sendMessage)] = '\0';
+		sendMessage[33 + strlen(routeMessage)] = '\0';
 	}
 
 	// 打包心跳检测信息
 	void constructHeartBeatPacket(char *sendMessage) {
 		sendMessage[0] = '2';
 		writeAddress(sendMessage + 1);
-		char message[] = "I am alive!";
-		strncpy(sendMessage + 33, "I am alive!", strlen(message));
+		char content[] = "I am alive!";
+		strncpy(sendMessage + 33, content, strlen(content));
+		sendMessage[33+strlen(content)] = 0x00;
 	}
 
 	// 打包响应包
-	void constructResponsePacket(char *sendMessage, char *message) {
+	void constructResponsePacket(char *sendMessage, char *content) {
 		sendMessage[0] = '3';
+		cout << source.ipaddress << ' ' << dst.ipaddress << endl;
 		writeAddress(sendMessage + 1);
-		strncpy(sendMessage + 33, message, strlen(message));
-		sendMessage[33 + strlen(sendMessage)] = '\0';
+		strncpy(sendMessage + 33, content, strlen(content));
+		sendMessage[33 + strlen(content)] = '\0';
 	}
 
 	void writeAddress(char *sendMessage) {
@@ -73,14 +76,17 @@ public:
 	}
 
 	// 根据接收到的信息，实例化为一个virtual packet
+	// 处理乱的包的情况
 	void makePacket(char *receivedMessage) {
 		strcpy(recvBuf, receivedMessage);
 		type = receivedMessage[0] - '0';
 		strncpy(source.ipaddress, receivedMessage + 1, 15);
 		strncpy(dst.ipaddress, receivedMessage + 17, 15);
-		source.ipaddress[16] = '\0';
-		dst.ipaddress[16] = '\0';
-		strncpy(message, receivedMessage + 33, strlen(receivedMessage) - 32);
+		source.ipaddress[15] = '\0';
+		dst.ipaddress[15] = '\0';
+		strncpy(message, receivedMessage + 33, strlen(receivedMessage) - 33);
+		message[strlen(receivedMessage)-33] = 0x00;
+		cout << strlen(message) << endl;
 	}
 
 	// 输出这个包的内容

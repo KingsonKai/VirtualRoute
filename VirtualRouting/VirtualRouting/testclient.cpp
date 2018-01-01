@@ -19,7 +19,7 @@ int main()
     //连接到服务端
 
     //发送数据
-    char message[20]="HelloSocket!";
+    char message[1000]="0127.000.000.001*127.000.000.001*TEST";
     char recvBuf[50];
     sendto(sockClient, message, strlen(message), 0, (SOCKADDR*)&addrServer, len);
     recvfrom(sockClient, recvBuf, 50, 0, (SOCKADDR*)&addrServer, &len);

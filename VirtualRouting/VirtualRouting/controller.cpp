@@ -36,7 +36,6 @@ public:
 		this->port = port;
 		this->name = name;
 		this->routelist = routelist;
-		table = RouteTableLS(name);
 		WSADATA wsaData;
 		WSAStartup(MAKEWORD(2, 2), &wsaData);
 		sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -54,13 +53,17 @@ public:
 
 	// start监听
 	void run() {
+	    SOCKADDR_IN addrClient;
+	    int nSize = sizeof(addrClient);
 		while (1) {
 			int nSize = sizeof(sockAddr);
 
 			char recvBuf[MAXBYTE];
-			int ret = recvfrom(sock, recvBuf, MAXBYTE, 0, (SOCKADDR*)&sockAddr, &nSize);
+			int ret = recvfrom(sock, recvBuf, MAXBYTE, 0, (SOCKADDR*)&addrClient, &nSize);
 			if (ret > 0) {
-				handleReceivedPacket(recvBuf);
+                recvBuf[ret] = 0x00;
+                //cout << inet_ntoa(addrClient.sin_addr) << endl; 获取另一端的IP地址
+                handleReceivedPacket(recvBuf);
 			}
 			// getPack or forward packet
 		}
@@ -121,17 +124,22 @@ public:
 		char sendMessage[MAXBYTE];
 		Addr local(name, localaddr);
 		Addr dst('1', dstip);
+		cout << "LocalAddr" << localaddr << endl;
+		cout << "local.addr" << local.ipaddress << endl;
+		cout << "DstAddr" << dstip << endl;
+		cout << "DST.ADDR" << dst.ipaddress << endl;
 		virtualPacket responsePacket(3, local, dst, NULL);
-		char *message;
+		char message[MAXBYTE];
 		strcpy(message, RESPONSE);
 		responsePacket.constructResponsePacket(sendMessage, message);
 		/* 将包发送至下一跳路由器 */
-		sendPacket(sendMessage, table.getNextHop(dst));
+		sendPacket(sendMessage, "127.000.000.001");
 	}
 
 	// 处理接收的包，根据packet类型调用以下四种处理方式
 	void handleReceivedPacket(char *recvBuf) {
 		/* 将收到的字符串数据转化为数据包格式 */
+		cout << recvBuf << endl;
 		virtualPacket packet;
 		packet.makePacket(recvBuf);
 		if (packet.type == 0) {
@@ -146,13 +154,17 @@ public:
 		else if (packet.type == 3) {
 			handleResponsePacket(packet);
 		}
+		else {
+            cout << "wrong packet" << endl;
+		}
 	}
 
 	// 处理心跳检测包
 	void handleHeartBeatPacket(virtualPacket packet) {
 		// 若有收到，回应主机，目前正在工作
 		if (strcmp(packet.getDst().ipaddress, localaddr) == 0) {
-			sendResponsePacket(packet.getSource().ipaddress, "I am alive!");
+            char res[] = "I am alive!";
+			sendResponsePacket(packet.getSource().ipaddress, res);
 		}
         else {
             forward(packet);
@@ -209,7 +221,7 @@ public:
 		addr_Server.sin_family = AF_INET;
 		addr_Server.sin_port = htons(PORT);
 		addr_Server.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
-
+        cout << "220" << endl;
 		sendto(sock, sendMessage, strlen(sendMessage), 0, (SOCKADDR*)&addr_Server, sizeof(SOCKADDR));
 	   return addr_Server;
     }
@@ -225,5 +237,10 @@ int main() {
     std::vector<route> routelist;
     char ip[SIZE] = "127.000.000.001";
     controller test(ip, localname, PORT, routelist);
+    test.listen();
+    test.run();
+    for (auto entry : test.table.routetable) {
+        cout << entry;
+    }
     return 0;
 }

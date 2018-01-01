@@ -11,7 +11,7 @@ public:
 	map<char, vector<pathInfo>> networkGraph;//整个网络拓扑图的边,networkGraph['A']包括所有从A出发的边
 	vector<Addr> hostAddrs;  //方便主机名和ip地址的转换
 	char myHostName;//本机主机名
-	RouteTableLS(char name='-') {
+	RouteTableLS(char name='A') {
 		myHostName = name;
 		//获取所有hostAddrs,0对应A的信息
 		char ipA[SIZE] = "172.18.157.159";
@@ -47,7 +47,7 @@ public:
 			pathInfo(hostAddrs[4], hostAddrs[0], 5),
 			pathInfo(hostAddrs[4], hostAddrs['B' - 'A'], 3)
 		};
-		//LSalgorithm();//更新路由表
+		LSalgorithm();//更新路由表
 	}
 	~RouteTableLS() {}
 

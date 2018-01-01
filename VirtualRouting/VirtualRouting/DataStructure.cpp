@@ -5,8 +5,8 @@ public:
     char name;                 // 如ABCD
     char ipaddress[SIZE];      // IP地址
     Addr(char name, char *ip) {
-        strcpy(ipaddress, ip);
         this->name = name;
+        strcpy(ipaddress, ip);
     }
 
     Addr() {
@@ -37,6 +37,12 @@ public:
     }
 };
 
+ostream& operator<<(ostream& out, routeTableEntry &e)
+{
+    cout << "Destination address: " << e.addr.ipaddress << " | " << "NextHop: " << e.nexthop << " | " << "Cost: " << e.cost << endl;
+    return out;
+}
+
 // 网络拓补图中的路径信息
 class pathInfo {
 public:
@@ -48,8 +54,12 @@ public:
         this->addr2 = addr2;
         this->cost = cost;
     }
-
 };
+
+ostream& operator<<(ostream& out, pathInfo &p) {
+    cout << "Address 1: " << p.addr1.ipaddress << " | " << "Address 2: " << p.addr2.ipaddress << " | " << "Cost: " << p.cost << endl;
+    return out;
+}
 
 // 路由器信息
 class route {
@@ -75,3 +85,8 @@ public:
         this->cost = -1;
     }
 };
+
+ostream& operator<<(ostream& out, route &r) {
+    cout << "Router address: " << r.addr.ipaddress << " | " << "Cost: " << r.cost << " | " << "Dumped or not?" << (r.dumped == false ? "No" : "Yes");
+    return out;
+}
