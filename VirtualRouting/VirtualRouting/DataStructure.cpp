@@ -1,19 +1,18 @@
 #define SIZE 16
-#include<cstring>
 // 基本的地址信息
-class Addr
-{
+class Addr {
 public:
     char name;                 // 如ABCD
     char ipaddress[SIZE];      // IP地址
     Addr(char name, char *ip) {
-        strcpy_s(ipaddress, ip);
+        strcpy(ipaddress, ip);
         this->name = name;
     }
 
     Addr() {
         name = '1';
     }
+
 	bool operator==(Addr other) {
 		if (name == other.name && strcmp(ipaddress, other.ipaddress)) {
 			return true;
@@ -25,8 +24,7 @@ public:
 };
 
 // 路由表信息单位
-class routeTableEntry
-{
+class routeTableEntry {
 public:
     Addr addr;
     char nexthop[SIZE];         // 下一跳路由器
@@ -34,14 +32,13 @@ public:
 
     routeTableEntry(Addr addr, char nexthop[16], int cost) {
         this->addr = addr;
-        strcpy_s(this->nexthop, nexthop);
+        strcpy(this->nexthop, nexthop);
         this->cost = cost;
     }
 };
 
 // 网络拓补图中的路径信息
-class pathInfo
-{
+class pathInfo {
 public:
     Addr addr1, addr2;
     int cost;
@@ -55,8 +52,7 @@ public:
 };
 
 // 路由器信息
-class route
-{
+class route {
 public:
     Addr addr;
     int cost;                    // 到路由器的开销
@@ -75,7 +71,7 @@ public:
     }
 
     void setDumped() {
-        this->dumped = true; 
+        this->dumped = true;
         this->cost = -1;
     }
 };

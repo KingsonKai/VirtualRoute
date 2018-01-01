@@ -4,7 +4,8 @@ public:
 	int type;
 	Addr source;
 	Addr dst;
-	char message[MAX_BYTE];
+	char message[MAXBYTE];
+	char recvBuf[MAXBYTE];
 
 	virtualPacket(int type, Addr source, Addr dst, char *message) {
 		this->type = type;
@@ -21,7 +22,7 @@ public:
 	// sendMessage是指针，复制后内容会改变，在路由器模块中就能接收到消息
 
 	// 根据要发送的message，构建好字符流，调用strncpy复制到sendMessage中
-	void constructNormalPacket(char *sendMessage, message) {
+	void constructNormalPacket(char *sendMessage, char* message) {
 		sendMessage[0] = '0';
 		writeAddress(sendMessage + 1);
 		strncpy(sendMessage + 33, message, strlen(message));
@@ -32,7 +33,7 @@ public:
 	void constructRouterInfoPacket(char *sendMessage, std::vector<routeTableEntry> routeTable) {
 		sendMessage[0] = '1';
 		writeAddress(sendMessage + 1);
-		char routeMessage[MAX_BYTE];
+		char routeMessage[MAXBYTE];
 		for (auto e : routeTable) {
 			strncpy(routeMessage + strlen(routeMessage), e.addr.ipaddress, strlen(e.addr.ipaddress));
 			if (e.cost > 10) {
@@ -73,6 +74,7 @@ public:
 
 	// 根据接收到的信息，实例化为一个virtual packet
 	void makePacket(char *receivedMessage) {
+		strcpy(recvBuf, receivedMessage);
 		type = receivedMessage[0] - '0';
 		strncpy(source.ipaddress, receivedMessage + 1, 15);
 		strncpy(dst.ipaddress, receivedMessage + 17, 15);
@@ -104,5 +106,9 @@ public:
 
 	char* getMessage() {
 		return message;
+	}
+
+	char* getRecvBuf() {
+		return recvBuf;
 	}
 };

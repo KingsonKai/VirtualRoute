@@ -17,7 +17,6 @@ public:
         strcpy(ipaddress, ip);
         this->name = name;
     }
-    
     Addr() {
         name = '1';
     }

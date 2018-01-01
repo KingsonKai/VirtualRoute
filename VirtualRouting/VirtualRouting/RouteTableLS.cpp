@@ -2,7 +2,6 @@
 #include<iostream>
 #include<map>
 #include<queue>
-#include "DataStructure.cpp"
 using namespace std;
 class RouteTableLS
 {
@@ -12,14 +11,19 @@ public:
 	map<char, vector<pathInfo>> networkGraph;//整个网络拓扑图的边,networkGraph['A']包括所有从A出发的边
 	vector<Addr> hostAddrs;  //方便主机名和ip地址的转换
 	char myHostName;//本机主机名
-	RouteTableLS(char name) {
+	RouteTableLS(char name='-') {
 		myHostName = name;
 		//获取所有hostAddrs,0对应A的信息
-		hostAddrs.push_back(Addr('A', "172.18.157.159"));
-		hostAddrs.push_back(Addr('B', "172.18.156.76"));//赋值后是多少位
-		hostAddrs.push_back(Addr('C', "172.18.159.66"));
-		hostAddrs.push_back(Addr('D', "172.18.159.150"));
-		hostAddrs.push_back(Addr('E', "172.18.158.165"));
+		char ipA[SIZE] = "172.18.157.159";
+		char ipB[SIZE] = "172.18.156.76";
+		char ipC[SIZE] = "172.18.159.66";
+		char ipD[SIZE] = "172.18.159.150";
+		char ipE[SIZE] = "172.18.158.165";
+		hostAddrs.push_back(Addr('A', ipA));
+		hostAddrs.push_back(Addr('B', ipB));//赋值后是多少位
+		hostAddrs.push_back(Addr('C', ipC));
+		hostAddrs.push_back(Addr('D', ipD));
+		hostAddrs.push_back(Addr('E', ipE));
 		//获取整体拓扑结构,暂时手动输入获取,后期可以尝试动态修改，就是创建了UI之后启动程序让用户输入边数和边权
 		networkGraph['A'] = vector<pathInfo>{
 			pathInfo(hostAddrs[0], hostAddrs['C' - 'A'], 3),
@@ -43,7 +47,7 @@ public:
 			pathInfo(hostAddrs[4], hostAddrs[0], 5),
 			pathInfo(hostAddrs[4], hostAddrs['B' - 'A'], 3)
 		};
-		LSalgorithm();//更新路由表
+		//LSalgorithm();//更新路由表
 	}
 	~RouteTableLS() {}
 
@@ -82,6 +86,13 @@ public:
 			if (routetable[i].addr.name == dst.name) return routetable[i].nexthop;
 		}
 		return ("0.0.0.0");//默认返回
+	}
+
+	char getRouterName(char *ip) {
+        for (auto addr : hostAddrs) {
+            if (strcmp(addr.ipaddress, ip) == 0)
+                return addr.name;
+        }
 	}
 };
 
