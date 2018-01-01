@@ -17,7 +17,6 @@ public:
 
 	void LSalgorithm();
 	char* getNextHop(Addr dst);
-
 	char getRouterName(char *ip);
 };
 
