@@ -132,6 +132,17 @@ public:
 				}
 			}
 		}
+		
+		vector<routeTableEntry>::iterator iter;
+		for (iter = routetable.begin(); iter != routetable.end(); ) {
+			if (iter->addr.name == anHostName && myTable[myHostName - 'A'][anHostName - 'A'] >= 9999) {
+				routetable.erase(iter);
+				break;
+			}
+			else {
+				iter++;
+			}
+		}
 		for (int i = 0; i < Dis_vector.size(); i++) {
 			Dis_vector[i] = myTable[myHostName - 'A'][i];
 		}

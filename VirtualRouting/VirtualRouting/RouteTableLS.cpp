@@ -83,6 +83,7 @@ public:
 			routetable.push_back(routeTableEntry(hostAddrs[i], hostAddrs[getStart].ipaddress, dis[hostAddrs[i].name - 'A']));
 		}
 	}
+
 	char* getNextHop(Addr dst) {   // 获得下一跳路由器
 		for (int i = 0; i < routetable.size(); i++) {
 			if (routetable[i].addr.name == dst.name) return routetable[i].nexthop;
@@ -90,13 +91,7 @@ public:
 		return ("0.0.0.0");//默认返回
 	}
 
-	char getRouterName(char *ip) {
-        for (auto addr : hostAddrs) {
-            if (strcmp(addr.ipaddress, ip) == 0)
-                return addr.name;
-        }
-	}
-	bool setdown(Addr a) {
+	bool setDown(Addr a) {
 		bool is = false;
 		for (int i = 0; i < hostAddrs.size(); i++) {
 			if (hostAddrs[i] == a) {
@@ -142,6 +137,7 @@ public:
 		}
 		return my_neighbors;
 	}
+
 	// 主机名到IP地址的转换
 	char* getIPAddress(char name) {
 		for (auto addr : hostAddrs) {
@@ -152,6 +148,13 @@ public:
 		return NULL;
 	}
 
+	// 从IP到主机名的转换
+	char getHostName(char *ip) {
+        for (auto addr : hostAddrs) {
+            if (strcmp(addr.ipaddress, ip) == 0)
+                return addr.name;
+        }
+	}
 };
 
 

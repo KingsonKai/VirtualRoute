@@ -5,13 +5,14 @@
 #include <cstring>
 #include <ctime>
 #include <windows.h>
+// vs 忽略strcpy安全性问题
+#pragma warning(disable:4996)
 using namespace std;
 #include "DataStructure.cpp"
 #include "virtualPacket.cpp"
 #include "RouteTableLS.cpp"
 #define PORT 8080
 #define localname 'A'
-
 
 
 // controller
@@ -27,22 +28,47 @@ public:
 	char localaddr[SIZE];         // 本机地址
 	char name;
 	int port;                     // 端口号
-<<<<<<< HEAD
+
+	// DV
 	std::vector<route> routelist;  // 邻居路由表
-								   //RouteTableLS table;
-	RouteTableDV table;
-=======
+	RouteTableDV table;			   //RouteTableLS table;
+
+	/*
+	// LS
 	std::vector<route> routelist;  // 路由表
 	RouteTableLS table;
->>>>>>> 5b38df841c6ad4cea232346153979741198126c4
+	*/
 
 	SOCKET sock;              // socket模块
 	sockaddr_in sockAddr;         // 绑定的socket地址
 
-								  /*
-								  // 最后一次发送心跳包的时间
-								  vector<pair<char, time_t>>;
-								  */
+	
+	// 最后一次收到邻居发送的心跳包的时间
+	vector<pair<Addr, time_t>> heartBeatTimetable;
+
+	// 检测邻居存活
+	void checkNeighbor() {
+		time_t currentTime;
+		time(&currentTime);
+		bool isChange = false;
+		for (auto p : heartBeatTimetable) {
+			double timeDiff = difftime(currentTime, p.second);
+			if (timeDiff > 2.0) {
+				if (table.setDown(p.first)) {
+					isChange = true;
+					/*
+					// LS
+					// 检测到某台主机down掉，向邻居告知
+					sendDownPacket(p.first);
+					*/
+				}
+			}
+		}
+		// DV
+		if (isChange) {
+			sendUpdatePacket();
+		}
+	}
 
 	controller(char *localaddr, char name, int port, vector<route> routelist) {
 		strcpy(this->localaddr, localaddr);
@@ -79,32 +105,15 @@ public:
 		}
 	}
 
-
-	/*
-	// 向其他所有路由器发送心跳监测包，监测邻居是否被down掉
-	void sendHeartBeatPacket() {
-	for (auto r : routelist) {
-	char sendMessage[MAXBYTE];
-	Addr local(name, localaddr);
-	Addr dst(r.addr.name, r.addr.ipaddress);
-	virtualPacket heartbeatPacket(2, local, dst, NULL);
-	heartbeatPacket.constructHeartBeatPacket(sendMessage);
-	SOCKADDR_IN addr_Server = sendPacket(sendMessage, dst.ipaddress); //directly
-	char recvBuf[MAXBYTE];
-	int len = sizeof(addr_Server);
-	recvfrom(sock, recvBuf, MAXBYTE, 0, (SOCKADDR*)&addr_Server, &len);
-	virtualPacket packet;
-	packet.makePacket(recvBuf);
-	if (strcmp(packet.getMessage(), "I am alive!") == 0)
-	continue;
-	else {
-	r.setDumped();
-	// update routeList
-	// send updatepacket
+	// 发送普通的packet信息，字符串呀乱七八糟的
+	void sendNormalPacket(char *dstip, char *message) {
+		char sendMessage[MAXBYTE];
+		Addr local(name, localaddr);
+		Addr dst('1', dstip);
+		virtualPacket normalPacket(0, local, dst, NULL);
+		normalPacket.constructNormalPacket(sendMessage, message);
+		sendPacket(sendMessage, table.getNextHop(dst));
 	}
-	}
-	}
-	*/
 
 	// 发送路由表信息,只发给邻居
 	void sendUpdatePacket() {
@@ -113,23 +122,22 @@ public:
 			Addr local(name, localaddr);
 			Addr dst(addr.name, addr.ipaddress);
 			virtualPacket updatePacket(1, local, dst, NULL);
-			updatePacket.constructRouterInfoPacket(sendMessage, table.routetable);//???
-			sendPacket(sendMessage, dst.ipaddress);
+			// 向邻居发送更新的距离矢量
+			updatePacket.constructRouterInfoPacket(sendMessage, table.get_my_dis_vector(dst.ipaddress));
+			sendPacket(sendMessage, table.getNextHop(dst));
 		}
 	}
 
-	// 发送普通的packet信息，字符串呀乱七八糟的
-	void sendNormalPacket(char *dstip, char *message) {
-		char sendMessage[MAXBYTE];
-		Addr local(name, localaddr);
-		Addr dst('1', dstip);
-		virtualPacket normalPacket(0, local, dst, NULL);
-		normalPacket.constructNormalPacket(sendMessage, message);
-		SOCKADDR_IN addr_Server = sendPacket(sendMessage, table.getNextHop(dst));
-		int len = sizeof(addr_Server);
-		char recvBuf[MAXBYTE];
-		recvfrom(sock, recvBuf, MAXBYTE, 0, (SOCKADDR*)&addr_Server, &len);
-		handleReceivedPacket(recvBuf);
+	// 向其他所有路由器发送心跳监测包，监测邻居是否被down掉
+	void sendHeartBeatPacket() {
+		for (auto addr : table.getNeighbors()) {
+			char sendMessage[MAXBYTE];
+			Addr local(name, localaddr);
+			Addr dst(addr.name, addr.ipaddress);
+			virtualPacket heartbeatPacket(2, local, dst, NULL);
+			heartbeatPacket.constructHeartBeatPacket(sendMessage);
+			sendPacket(sendMessage, table.getNextHop(dst));
+		}
 	}
 
 	// 发送回响信息，表明是否收到了这个包
@@ -141,18 +149,16 @@ public:
 		char *message;
 		strcpy(message, RESPONSE);
 		responsePacket.constructResponsePacket(sendMessage, message);
-		/* 将包发送至下一跳路由器 */
 		sendPacket(sendMessage, table.getNextHop(dst));
 	}
 
-	// Addr* table.getNeighbors()
+	// LS
 	// down包只发送给邻居
-	void sendDownPacket() {
+	void sendDownPacket(Addr downHost) {
 		for (auto addr : table.getNeighbors()) {
 			char sendMessage[MAXBYTE];
-			Addr local(name, localaddr);
 			Addr dst(addr.name, addr.ipaddress);
-			virtualPacket downPacket(4, local, dst, NULL);
+			virtualPacket downPacket(4, downHost, dst, NULL);
 			downPacket.constructDownPacket(sendMessage);
 			// 目的地是邻居，目的IP直接填目的地址
 			sendPacket(sendMessage, dst.ipaddress);
@@ -176,72 +182,17 @@ public:
 		else if (packet.type == 3) {
 			handleResponsePacket(packet);
 		}
+		/*
 		else if (packet.type == 4) {
 			handleDownPacket(packet);
-		}
-	}
-
-	/*
-	// 处理心跳检测包
-	void handleHeartBeatPacket(virtualPacket packet) {
-	// 若有收到，回应主机，目前正在工作
-	if (strcmp(packet.getDst().ipaddress, localaddr) == 0) {
-	sendResponsePacket(packet.getSource().ipaddress, "I am alive!");
-	}
-	else {
-	forward(packet);
-	}
-	}
-	*/
-
-	/* 处理接收到的down包
-	根据接收到的down包更新自己的路由表
-	并将自己的更新信息转发
-	*/
-	void handleDownPacket(virtualPacket packet) {
-		char source[20];
-		char dst[20];
-		strcpy(source, packet.getSource().ipaddress);
-		strcpy(dst, packet.getDst().ipaddress);
-		// DV
-		if (strcmp(dst, localaddr) == 0) {
-			if (table.setDown(packet.getSource())) {
-				sendUpdatePacket();
-			}
-		}
-		/*
-		// LS
-		if (strcmp(dst, localaddr) == 0) {
-		if (table.setDown(packet.getSource())) {
-		forwardDownPacket(packet);
-		}
 		}
 		*/
 	}
 
-	/* 转发Down包给邻居
-	源IP地址不变,改变目的IP地址
+	/* 处理普通的包
+	如果目的地址是自己则将包的内容输出
+	否则根据目的地址转发
 	*/
-	void forwardDownPacket(virtualPacket packet) {
-		for (auto addr : table.getNeighbors()) {
-			packet.changeDstIP(addr.ipaddress);
-			sendPacket(packet.getRecvBuf(), addr.ipaddress);
-		}
-	}
-
-	// 处理路由表信息更新包
-	void handleUpdatePacket(virtualPacket packet) {
-		char dst[20];
-		strcpy(dst, packet.getDst().ipaddress);
-		if (strcmp(dst, localaddr) == 0) {
-			// construct a table T
-			if (DValgorithm(T, table.getHostName(dst))) {  //???
-				sendUpdatePacket();
-			}
-		}
-	}
-
-	// 处理普通的包
 	void handleNormalPacket(virtualPacket packet) {
 		if (strcmp(packet.getDst().ipaddress, localaddr) == 0) {
 			packet.print();
@@ -257,10 +208,78 @@ public:
 		sendPacket(packet.getRecvBuf(), table.getNextHop(packet.getDst()));
 	}
 
+	/* 处理路由表信息更新包
+	调用DV算法更新路由表
+	向邻居转发更新信息
+	*/
+	void handleUpdatePacket(virtualPacket packet) {
+		char source[20];
+		char dst[20];
+		strcpy(dst, packet.getDst().ipaddress);
+		strcpy(source, packet.getSource().ipaddress);
+		if (strcmp(dst, localaddr) == 0) {
+			vector<int> disVector = packet.analyzeUpdatePacket();
+			if (DValgorithm(disVector, table.getHostName(source))) {
+				sendUpdatePacket();
+			}
+		}
+	}
+
+	// 处理心跳检测包
+	void handleHeartBeatPacket(virtualPacket packet) {
+		// 若有收到，回应主机，目前正在工作
+		if (strcmp(packet.getDst().ipaddress, localaddr) == 0) {
+			time_t receiveTime;
+			time(&receiveTime);
+			Addr sourceAddr = packet.getSource();
+			updateHeartBeatTimetable(sourceAddr, receiveTime);
+		}
+	}
+
+	// 更新记录收到的每个邻居的心跳包的最后时间
+	void updateHeartBeatTimetable(Addr sourceAddr, time_t receiveTime) {
+		for (auto p : heartBeatTimetable) {
+			if (p.first == sourceAddr) {
+				p.second = receiveTime;
+			}
+		}
+	}
+
 	// 处理响应包
 	void handleResponsePacket(virtualPacket packet) {
 		if (strcmp(packet.getDst().ipaddress, localaddr) == 0) {
 			cout << "packet to IP : " << packet.getSource().ipaddress << " is received" << endl;
+		}
+	}
+
+	// LS
+	/* 处理接收到的down包
+	根据接收到的down包更新自己的路由表
+	并将自己的更新信息转发
+	*/
+	void handleDownPacket(virtualPacket packet) {
+		char source[20];
+		char dst[20];
+		strcpy(source, packet.getSource().ipaddress);
+		strcpy(dst, packet.getDst().ipaddress);
+		
+		// LS
+		if (strcmp(dst, localaddr) == 0) {
+			if (table.setDown(packet.getSource())) {
+				forwardDownPacket(packet);
+			}
+		}
+		
+	}
+
+	// LS
+	/* 转发Down包给邻居
+	源IP地址不变,改变目的IP地址
+	*/
+	void forwardDownPacket(virtualPacket packet) {
+		for (auto addr : table.getNeighbors()) {
+			packet.changeDstIP(addr.ipaddress);
+			sendPacket(packet.getRecvBuf(), addr.ipaddress);
 		}
 	}
 
@@ -282,12 +301,12 @@ public:
 };
 
 int main() {
-<<<<<<< HEAD
+
 	std::vector<route> routelist;
 	char ip[SIZE] = "127.000.000.001";
 	controller test(ip, localname, PORT, routelist);
 	return 0;
-=======
+
     /*
     std::vector<route> routelist;
     char ip[SIZE] = "127.000.000.001";
@@ -302,5 +321,5 @@ int main() {
     cout << endl << endl << "Forward packet to 172.018.159.150" << endl;
     cout << endl << "Forward packet to 172.018.157.159";
     return 0;
->>>>>>> 5b38df841c6ad4cea232346153979741198126c4
+
 }

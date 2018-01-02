@@ -29,14 +29,58 @@ public:
 		sendMessage[33 + strlen(sendMessage)] = '\0';
 	}
 
+	// LS
 	// 打包down包信息
 	void constructDownPacket(char *sendMessage) {
 		sendMessage[0] = '4';
 		writeAddress(sendMessage + 1);
-		char message[] = "I am going to down!";
-		strncpy(sendMessage + 33, "I am going to down!", strlen(message));
+		char message[] = "someone is down!";
+		strncpy(sendMessage + 33, "someone is down!", strlen(message));
+	}
+	
+
+	/* 打包路由表信息
+	将DV算法得到的vector<int>中的数字转换为字符串插入发送的消息中
+	代表每个数字的字符串之间用*隔开
+	*/
+	void constructRouterInfoPacket(char *sendMessage, vector<int> Nei_dis) {
+		sendMessage[0] = '1';
+		writeAddress(sendMessage + 1);
+		for (int i = 0; i < Nei_dis.size(); ++i) {
+			string num = std::to_string(Nei_dis[i]);
+			const char* c = num.data();
+			strcat(sendMessage, c);
+			strcat(sendMessage, "*");
+		}
 	}
 
+	/* 解析收到的路由更新包
+	提取返回可供DV使用的vector<int>，即距离矢量
+	*/
+	vector<int> analyzeUpdatePacket() {
+		string str_message(message);
+		vector<int> num;
+		int begin = 0;
+		int end = 0;
+		int count = 0;
+		do {
+			if (str_message[end] == '*') {
+				string tmpStr = str_message.substr(begin, end - begin);
+				int tmpNum = std::atoi(tmpStr.c_str());
+				num.push_back(tmpNum);
+				begin = end + 1;
+				end = begin;
+				++count;
+			}
+			else {
+				++end;
+			}
+		} while (end < str_message.size() && count != 5);
+
+		return num;
+	}
+
+	/*
 	// 打包路由表信息
 	void constructRouterInfoPacket(char *sendMessage, std::vector<routeTableEntry> routeTable) {
 		sendMessage[0] = '1';
@@ -56,6 +100,7 @@ public:
 		strncpy(sendMessage + 33, routeMessage, strlen(routeMessage));
 		sendMessage[33 + strlen(sendMessage)] = '\0';
 	}
+	*/
 
 	// 打包心跳检测信息
 	void constructHeartBeatPacket(char *sendMessage) {
@@ -73,10 +118,13 @@ public:
 		sendMessage[33 + strlen(sendMessage)] = '\0';
 	}
 
+	// LS
+	// 只改变包的目的IP地址，其他不变
 	void changeDstIP(char *newDst) {
 		strcpy(dst.ipaddress, newDst);
 		strncpy(recvBuf + 17, newDst, strlen(newDst));
 	}
+	
 
 	void writeAddress(char *sendMessage) {
 		strncpy(sendMessage, source.ipaddress, strlen(source.ipaddress));
@@ -88,19 +136,17 @@ public:
 	// 根据接收到的信息，实例化为一个virtual packet
 	void makePacket(char *receivedMessage) {
 		strcpy(recvBuf, receivedMessage);
+
 		type = receivedMessage[0] - '0';
+
 		strncpy(source.ipaddress, receivedMessage + 1, 15);
-		strncpy(dst.ipaddress, receivedMessage + 17, 15);
-<<<<<<< HEAD
-		source.ipaddress[16] = '\0';
-		dst.ipaddress[16] = '\0';
-		strncpy(message, receivedMessage + 33, strlen(receivedMessage) - 32);
-=======
 		source.ipaddress[15] = '\0';
+
+		strncpy(dst.ipaddress, receivedMessage + 17, 15);
 		dst.ipaddress[15] = '\0';
+
 		strncpy(message, receivedMessage + 33, strlen(receivedMessage) - 33);
-		message[strlen(receivedMessage)-33] = 0x00;
->>>>>>> 5b38df841c6ad4cea232346153979741198126c4
+		message[strlen(receivedMessage)-33] = '\0';
 	}
 
 	// 输出这个包的内容

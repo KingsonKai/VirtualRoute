@@ -37,8 +37,7 @@ public:
     }
 };
 
-ostream& operator<<(ostream& out, routeTableEntry &e)
-{
+ostream& operator<<(ostream& out, routeTableEntry &e) {
     cout << "Destination address: " << e.addr.ipaddress << " | " << "NextHop: " << e.nexthop << " | " << "Cost: " << e.cost << endl;
     return out;
 }
