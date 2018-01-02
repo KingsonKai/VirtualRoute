@@ -142,7 +142,15 @@ public:
 		}
 		return my_neighbors;
 	}
-
+	// 主机名到IP地址的转换
+	char* getIPAddress(char name) {
+		for (auto addr : hostAddrs) {
+			if (name == addr.name) {
+				return addr.ipaddress;
+			}
+		}
+		return NULL;
+	}
 
 };
 
