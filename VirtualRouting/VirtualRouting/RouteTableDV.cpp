@@ -4,6 +4,8 @@
 #include<string>
 #include<queue>
 #include<iterator>
+// vs 忽略strcpy安全性问题
+#pragma warning(disable:4996)
 #include "DataStructure.cpp"
 using namespace std;
 class RouteTableDV
@@ -14,8 +16,8 @@ public:
 	vector<int> Dis_vector; //自己的距离向量
 	map<char, vector<pathInfo>> networkGraph;//只有自己到自己邻居的边
 	vector<Addr> hostAddrs; // IP和地址的映射
-	char myHostName;//本机主机名 
-	RouteTableDV(char name) {
+	char myHostName;//本机主机名
+	RouteTableDV(char name = 'A') {
 		myTable = vector<vector<int>>(5, vector<int>(5, 9999));
 		Dis_vector = vector<int>(5, 9999);
 		myHostName = name;
@@ -87,7 +89,7 @@ public:
 							if (routetable.empty()) {
 								Addr destAddr = Addr(hostAddrs[j]);
 								char nextRoute[16];
-								strcpy_s(nextRoute, hostAddrs[z].ipaddress);
+								strcpy(nextRoute, hostAddrs[z].ipaddress);
 								routetable.push_back(routeTableEntry(destAddr, nextRoute, myTable[i][j]));
 							}
 							else {
@@ -99,7 +101,7 @@ public:
 										//检测路由转发表中是否存在到中间点z的转发项，若有则更新转发表，将i到j的下一跳路由器定为i到z的下一跳路由器
 										for (int m = 0; m < routetable.size(); m++) {
 											if (routetable[m].addr.name == hostAddrs[z].name) {
-												strcpy_s(routetable[k].nexthop, routetable[m].nexthop);
+												strcpy(routetable[k].nexthop, routetable[m].nexthop);
 												routetable[k].cost = myTable[i][j];
 												is1 = true;
 												break;
@@ -107,7 +109,7 @@ public:
 										}
 										//不存在到中间点z的转发项，则i到j的下一跳就为z
 										if (!is1) {
-											strcpy_s(routetable[k].nexthop, hostAddrs[z].ipaddress);
+											strcpy(routetable[k].nexthop, hostAddrs[z].ipaddress);
 											routetable[k].cost = myTable[i][j];
 										}
 										is = true;
@@ -121,7 +123,7 @@ public:
 										if (routetable[m].addr.name == hostAddrs[z].name) {
 											Addr destAddr = Addr(hostAddrs[j]);
 											char nextRoute[16];
-											strcpy_s(nextRoute, routetable[m].nexthop);
+											strcpy(nextRoute, routetable[m].nexthop);
 											routetable.push_back(routeTableEntry(destAddr, nextRoute, myTable[i][j]));
 										}
 									}
@@ -132,7 +134,7 @@ public:
 				}
 			}
 		}
-		
+
 		vector<routeTableEntry>::iterator iter;
 		for (iter = routetable.begin(); iter != routetable.end(); ) {
 			if (iter->addr.name == anHostName && myTable[myHostName - 'A'][anHostName - 'A'] >= 9999) {

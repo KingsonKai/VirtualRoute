@@ -5,13 +5,14 @@ public:
 	Addr source;
 	Addr dst;
 	char message[MAXBYTE];
-	char recvBuf[MAXBYTE + 33];
+	char recvBuf[MAXBYTE];
 
 	virtualPacket(int type, Addr source, Addr dst, char *message) {
 		this->type = type;
 		this->source = source;
 		this->dst = dst;
-		strcpy(this->message, message);
+		if (message != NULL)
+            strcpy(this->message, message);
 	}
 
 	virtualPacket() {
@@ -22,20 +23,19 @@ public:
 	// sendMessage是指针，复制后内容会改变，在路由器模块中就能接收到消息
 
 	// 根据要发送的message，构建好字符流，调用strncpy复制到sendMessage中
-	void constructNormalPacket(char *sendMessage, char* message) {
+	void constructNormalPacket(char *sendMessage, char* content) {
 		sendMessage[0] = '0';
-		writeAddress(sendMessage + 1);
-		strncpy(sendMessage + 33, message, strlen(message));
-		sendMessage[33 + strlen(message)] = '\0';
+		writeAddress(sendMessage);
+		strcat(sendMessage, content);
 	}
 
 	// LS
 	// 打包down包信息
 	void constructDownPacket(char *sendMessage) {
 		sendMessage[0] = '4';
-		writeAddress(sendMessage + 1);
-		char message[] = "someone is down!";
-		strncpy(sendMessage + 33, message, strlen(message));
+		writeAddress(sendMessage);
+		char content[] = "someone is down!";
+		strcat(sendMessage, content);
 	}
 
 
@@ -45,7 +45,7 @@ public:
 	*/
 	void constructRouterInfoPacket(char *sendMessage, vector<int> Nei_dis) {
 		sendMessage[0] = '1';
-		writeAddress(sendMessage + 1);
+		writeAddress(sendMessage);
 		for (int i = 0; i < Nei_dis.size(); ++i) {
 			string num = std::to_string(Nei_dis[i]);
 			const char* c = num.data();
@@ -105,17 +105,16 @@ public:
 	// 打包心跳检测信息
 	void constructHeartBeatPacket(char *sendMessage) {
 		sendMessage[0] = '2';
-		writeAddress(sendMessage + 1);
-		char message[] = "I am alive!";
-		strncpy(sendMessage + 33, message, strlen(message));
+		writeAddress(sendMessage);
+		char content[] = "I am alive!";
+		strcpy(sendMessage, content);
 	}
 
 	// 打包响应包
-	void constructResponsePacket(char *sendMessage, char *message) {
+	void constructResponsePacket(char *sendMessage, char *content) {
 		sendMessage[0] = '3';
-		writeAddress(sendMessage + 1);
-		strncpy(sendMessage + 33, message, strlen(message));
-		sendMessage[33 + strlen(message)] = '\0';
+		writeAddress(sendMessage);
+		strcat(sendMessage, content);
 	}
 
 	// LS
@@ -126,10 +125,10 @@ public:
 	}
 
 	void writeAddress(char *sendMessage) {
-		strncpy(sendMessage, source.ipaddress, strlen(source.ipaddress));
-		sendMessage[16] = '*';
-		strncpy(sendMessage + 17, dst.ipaddress, strlen(dst.ipaddress));
-		sendMessage[32] = '*';
+        strcat(sendMessage, source.ipaddress);
+        strcat(sendMessage, "*");
+        strcat(sendMessage, dst.ipaddress);
+        strcat(sendMessage, "*");
 	}
 
 	// 根据接收到的信息，实例化为一个virtual packet

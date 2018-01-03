@@ -8,8 +8,8 @@
 // vs 忽略strcpy安全性问题
 #pragma warning(disable:4996)
 using namespace std;
-#include "virtualPacket.cpp"
 #include "RouteTableLS.cpp"
+#include "virtualPacket.cpp"
 #define PORT 8080
 #define localname 'A'
 
@@ -28,18 +28,20 @@ public:
 	char name;
 	int port;                     // 端口号
 
+    /*
 	// DV
 	std::vector<route> routelist;  // 邻居路由表
 	RouteTableDV table;			   //RouteTableLS table;
+    */
 
-	/*
 	// LS
 	std::vector<route> routelist;  // 路由表
 	RouteTableLS table;
-	*/
 
 	SOCKET sock;              // socket模块
 	sockaddr_in sockAddr;         // 绑定的socket地址
+	sockaddr_in sockClient;
+	int len;
 
 
 	// 最后一次收到邻居发送的心跳包的时间
@@ -65,7 +67,7 @@ public:
 		}
 		// DV
 		if (isChange) {
-			sendUpdatePacket();
+			//sendUpdatePacket();
 		}
 	}
 
@@ -96,8 +98,10 @@ public:
 			int nSize = sizeof(sockAddr);
 
 			char recvBuf[MAXBYTE];
-			int ret = recvfrom(sock, recvBuf, MAXBYTE, 0, (SOCKADDR*)&sockAddr, &nSize);
+			int ret = recvfrom(sock, recvBuf, MAXBYTE, 0, (SOCKADDR*)&sockClient, &nSize);
 			if (ret > 0) {
+			    recvBuf[ret] = '\0';
+                cout << strlen(recvBuf) << endl;
 				handleReceivedPacket(recvBuf);
 			}
 			// getPack or forward packet
@@ -114,6 +118,7 @@ public:
 		sendPacket(sendMessage, table.getNextHop(dst));
 	}
 
+    /*
 	// 发送路由表信息,只发给邻居
 	void sendUpdatePacket() {
 		for (auto addr : table.getNeighbors()) {
@@ -126,6 +131,7 @@ public:
 			sendPacket(sendMessage, table.getNextHop(dst));
 		}
 	}
+	*/
 
 	// 向其他所有路由器发送心跳监测包，监测邻居是否被down掉
 	void sendHeartBeatPacket() {
@@ -145,10 +151,11 @@ public:
 		Addr local(name, localaddr);
 		Addr dst('1', dstip);
 		virtualPacket responsePacket(3, local, dst, NULL);
-		char *message;
+		char message[MAXBYTE];
 		strcpy(message, RESPONSE);
 		responsePacket.constructResponsePacket(sendMessage, message);
-		sendPacket(sendMessage, table.getNextHop(dst));
+		cout << sendMessage << endl;
+		sendto(sock, sendMessage, strlen(sendMessage), 0, (SOCKADDR*)&sockClient, len);
 	}
 
 	// LS
@@ -173,7 +180,7 @@ public:
 			handleNormalPacket(packet);
 		}
 		else if (packet.type == 1) {
-			handleUpdatePacket(packet);
+			//handleUpdatePacket(packet);
 		}
 		else if (packet.type == 2) {
 			handleHeartBeatPacket(packet);
@@ -211,6 +218,7 @@ public:
 	调用DV算法更新路由表
 	向邻居转发更新信息
 	*/
+	/*
 	void handleUpdatePacket(virtualPacket packet) {
 		char source[20];
 		char dst[20];
@@ -218,11 +226,12 @@ public:
 		strcpy(source, packet.getSource().ipaddress);
 		if (strcmp(dst, localaddr) == 0) {
 			vector<int> disVector = packet.analyzeUpdatePacket();
-			if (DValgorithm(disVector, table.getHostName(source))) {
+			if (table.DValgorithm(disVector, table.getHostName(source))) {
 				sendUpdatePacket();
 			}
 		}
 	}
+	*/
 
 	// 处理心跳检测包
 	void handleHeartBeatPacket(virtualPacket packet) {
@@ -261,14 +270,14 @@ public:
 		char dst[20];
 		strcpy(source, packet.getSource().ipaddress);
 		strcpy(dst, packet.getDst().ipaddress);
-		
+
 		// LS
 		if (strcmp(dst, localaddr) == 0) {
 			if (table.setDown(packet.getSource())) {
 				forwardDownPacket(packet);
 			}
 		}
-		
+
 	}
 
 	// LS
@@ -304,6 +313,8 @@ int main() {
 	std::vector<route> routelist;
 	char ip[SIZE] = "127.000.000.001";
 	controller test(ip, localname, PORT, routelist);
+	test.listen();
+	test.run();
 
     for (auto entry : test.table.routetable) {
         cout << entry;

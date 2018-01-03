@@ -34,6 +34,8 @@ int main()
          }
          char response[] = "I have received";
          sendto(sockSrv, response, strlen(response), 0, (SOCKADDR*)&addrClient, len);
+         Sleep(3000);
+         puts(response);
    }
     return 0;
 }

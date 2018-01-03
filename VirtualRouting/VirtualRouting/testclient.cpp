@@ -20,9 +20,10 @@ int main()
 
     //发送数据
     char message[1000]="0127.000.000.001*127.000.000.001*TEST";
-    char recvBuf[50];
+    char recvBuf[100];
     sendto(sockClient, message, strlen(message), 0, (SOCKADDR*)&addrServer, len);
-    recvfrom(sockClient, recvBuf, 50, 0, (SOCKADDR*)&addrServer, &len);
+    int ret = recvfrom(sockClient, recvBuf, 100, 0, (SOCKADDR*)&addrServer, &len);
+    recvBuf[ret] = '\0';
     cout << recvBuf << endl;
 
     closesocket(sockClient);
