@@ -8,7 +8,6 @@
 // vs 忽略strcpy安全性问题
 #pragma warning(disable:4996)
 using namespace std;
-#include "DataStructure.cpp"
 #include "virtualPacket.cpp"
 #include "RouteTableLS.cpp"
 #define PORT 8080
@@ -42,7 +41,7 @@ public:
 	SOCKET sock;              // socket模块
 	sockaddr_in sockAddr;         // 绑定的socket地址
 
-	
+
 	// 最后一次收到邻居发送的心跳包的时间
 	vector<pair<Addr, time_t>> heartBeatTimetable;
 
@@ -305,21 +304,10 @@ int main() {
 	std::vector<route> routelist;
 	char ip[SIZE] = "127.000.000.001";
 	controller test(ip, localname, PORT, routelist);
-	return 0;
 
-    /*
-    std::vector<route> routelist;
-    char ip[SIZE] = "127.000.000.001";
-    controller test(ip, localname, PORT, routelist);
-    //#test.listen();
-    //#test.run();
     for (auto entry : test.table.routetable) {
         cout << entry;
-    } */
-    cout << "2172.018.157.159*172.018.157.076" << endl;
-    cout << "Send Packet to " << "172.018.157.076" << endl;
-    cout << endl << endl << "Forward packet to 172.018.159.150" << endl;
-    cout << endl << "Forward packet to 172.018.157.159";
+    }
     return 0;
 
 }

@@ -26,7 +26,7 @@ public:
 		sendMessage[0] = '0';
 		writeAddress(sendMessage + 1);
 		strncpy(sendMessage + 33, message, strlen(message));
-		sendMessage[33 + strlen(sendMessage)] = '\0';
+		sendMessage[33 + strlen(message)] = '\0';
 	}
 
 	// LS
@@ -35,9 +35,9 @@ public:
 		sendMessage[0] = '4';
 		writeAddress(sendMessage + 1);
 		char message[] = "someone is down!";
-		strncpy(sendMessage + 33, "someone is down!", strlen(message));
+		strncpy(sendMessage + 33, message, strlen(message));
 	}
-	
+
 
 	/* 打包路由表信息
 	将DV算法得到的vector<int>中的数字转换为字符串插入发送的消息中
@@ -107,7 +107,7 @@ public:
 		sendMessage[0] = '2';
 		writeAddress(sendMessage + 1);
 		char message[] = "I am alive!";
-		strncpy(sendMessage + 33, "I am alive!", strlen(message));
+		strncpy(sendMessage + 33, message, strlen(message));
 	}
 
 	// 打包响应包
@@ -115,7 +115,7 @@ public:
 		sendMessage[0] = '3';
 		writeAddress(sendMessage + 1);
 		strncpy(sendMessage + 33, message, strlen(message));
-		sendMessage[33 + strlen(sendMessage)] = '\0';
+		sendMessage[33 + strlen(message)] = '\0';
 	}
 
 	// LS
@@ -124,7 +124,6 @@ public:
 		strcpy(dst.ipaddress, newDst);
 		strncpy(recvBuf + 17, newDst, strlen(newDst));
 	}
-	
 
 	void writeAddress(char *sendMessage) {
 		strncpy(sendMessage, source.ipaddress, strlen(source.ipaddress));
