@@ -22,11 +22,11 @@ public:
 		Dis_vector = vector<int>(5, 9999);
 		myHostName = name;
 		//获取所有hostAddrs,0对应A的信息
-		hostAddrs.push_back(Addr('A', "172.18.157.159"));
-		hostAddrs.push_back(Addr('B', "172.18.156.76"));
-		hostAddrs.push_back(Addr('C', "172.18.159.66"));
-		hostAddrs.push_back(Addr('D', "172.18.159.150"));
-		hostAddrs.push_back(Addr('E', "172.18.158.165"));
+		hostAddrs.push_back(Addr('A', "172.018.157.159"));
+		hostAddrs.push_back(Addr('B', "172.018.156.076"));
+		hostAddrs.push_back(Addr('C', "172.018.159.066"));
+		hostAddrs.push_back(Addr('D', "172.018.159.150"));
+		hostAddrs.push_back(Addr('E', "172.018.158.165"));
 		//初始自己的路由表
 		if (myHostName == 'A') {
 			networkGraph['A'] = vector<pathInfo>{
@@ -71,6 +71,7 @@ public:
 		Dis_vector[myHostName - 'A'] = 0;
 	}
 	~RouteTableDV() {}
+
 	bool DValgorithm(vector<int> Nei_dis, char anHostName) {// 更新路由表，传入的是某个邻居发来的路由表以及它的主机名
 		vector<vector<int> > origin_table;
 		copy(origin_table, myTable);
@@ -156,6 +157,7 @@ public:
 		}
 
 	}
+
 	char* getNextHop(Addr dst) {   // 获得下一跳路由器
 		for (int i = 0; i < routetable.size(); i++) {
 			if (routetable[i].addr.name == dst.name) return routetable[i].nexthop;
@@ -169,6 +171,7 @@ public:
 			cout << "Cost: " << v.cost << endl;
 		}
 	}
+
 	void copy(vector<vector<int>> &v1, vector<vector<int>> &v2) {
 		for (int i = 0; i < v2.size(); i++) {
 			vector<int> temp;
@@ -178,6 +181,7 @@ public:
 			v1.push_back(temp);
 		}
 	}
+
 	vector<int> get_my_dis_vector(char dis) {//发给dis,处理毒性逆转的问题
 		vector<int> temp = Dis_vector;
 		for (int j = 0; j < routetable.size(); j++) {

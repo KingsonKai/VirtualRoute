@@ -15,7 +15,7 @@ int main()
     SOCKET sockSrv = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
 
     SOCKADDR_IN addrSrv;
-    addrSrv.sin_addr.s_addr = inet_addr("127.000.000.001");
+    addrSrv.sin_addr.s_addr = inet_addr("192.168.191.001");
     addrSrv.sin_family=AF_INET;
     addrSrv.sin_port=htons(8080);
      bind(sockSrv,(SOCKADDR*)&addrSrv,sizeof(SOCKADDR));

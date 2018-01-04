@@ -17,11 +17,11 @@ public:
 	RouteTableLS(char name='A') {
 		myHostName = name;
 		//获取所有hostAddrs,0对应A的信息
-		char ipA[SIZE] = "172.18.157.159";
-		char ipB[SIZE] = "172.18.156.76";
-		char ipC[SIZE] = "172.18.159.66";
-		char ipD[SIZE] = "172.18.159.150";
-		char ipE[SIZE] = "172.18.158.165";
+		char ipA[SIZE] = "172.018.157.159";
+		char ipB[SIZE] = "172.018.156.076";
+		char ipC[SIZE] = "172.018.159.066";
+		char ipD[SIZE] = "172.018.159.150";
+		char ipE[SIZE] = "172.018.158.165";
 		hostAddrs.push_back(Addr('A', ipA));
 		hostAddrs.push_back(Addr('B', ipB));//赋值后是多少位
 		hostAddrs.push_back(Addr('C', ipC));

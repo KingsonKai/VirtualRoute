@@ -4,15 +4,18 @@
 #include <vector>
 #include <cstring>
 #include <ctime>
+#define HAVE_STRUCT_TIMESPEC
 #include <windows.h>
+#include <pthread.h>
 // vs 忽略strcpy安全性问题
 #pragma warning(disable:4996)
 using namespace std;
 #include "RouteTableCode/RouteTableLS.cpp"
 #include "virtualPacket.cpp"
 #define PORT 8080
-#define localname 'A'
 
+char ip[SIZE] = "127.000.000.001";
+char localname = 'A';
 
 // controller
 // 接收packet，如果刚是给自己的，解析，否则转发
@@ -35,13 +38,11 @@ public:
     */
 
 	// LS
-	std::vector<route> routelist;  // 路由表
 	RouteTableLS table;
 
 	SOCKET sock;              // socket模块
 	sockaddr_in sockAddr;         // 绑定的socket地址
 	sockaddr_in sockClient;
-	int len;
 
 
 	// 最后一次收到邻居发送的心跳包的时间
@@ -71,11 +72,10 @@ public:
 		}
 	}
 
-	controller(char *localaddr, char name, int port, vector<route> routelist) {
+	controller(char *localaddr, char name, int port) {
 		strcpy(this->localaddr, localaddr);
 		this->port = port;
 		this->name = name;
-		this->routelist = routelist;
 		table = RouteTableLS(name);
 		WSADATA wsaData;
 		WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -133,7 +133,7 @@ public:
 	}
 	*/
 
-	// 向其他所有路由器发送心跳监测包，监测邻居是否被down掉
+	// 向其他路由路由器发送心跳监测包，监测邻居是否被down掉
 	void sendHeartBeatPacket() {
 		for (auto addr : table.getNeighbors()) {
 			char sendMessage[MAXBYTE];
@@ -155,7 +155,7 @@ public:
 		strcpy(message, RESPONSE);
 		responsePacket.constructResponsePacket(sendMessage, message);
 		cout << sendMessage << endl;
-		sendto(sock, sendMessage, strlen(sendMessage), 0, (SOCKADDR*)&sockClient, len);
+		sendPacket(sendMessage, dst.ipaddress);
 	}
 
 	// LS
@@ -211,6 +211,7 @@ public:
 
 	// 转发普通的包
 	void forward(virtualPacket packet) {
+	    cout << "From " << packet.getSource().ipaddress <<  "Forward To: " << packet.getDst().ipaddress << endl;
 		sendPacket(packet.getRecvBuf(), table.getNextHop(packet.getDst()));
 	}
 
@@ -295,7 +296,7 @@ public:
 		SOCKADDR_IN addr_Server; //服务器的地址等信息
 		addr_Server.sin_family = AF_INET;
 		addr_Server.sin_port = htons(PORT);
-		addr_Server.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
+		addr_Server.sin_addr.S_un.S_addr = inet_addr(dst);
 
 		sendto(sock, sendMessage, strlen(sendMessage), 0, (SOCKADDR*)&addr_Server, sizeof(SOCKADDR));
 		return addr_Server;
@@ -308,17 +309,57 @@ public:
 	}
 };
 
+controller c(ip, localname, PORT);
+
+void *start(void *args) {
+    c.listen();
+    c.run();
+}
+
+void *send(void *args) {
+    while (1) {
+        Sleep(5000);
+        srand((unsigned)time(NULL));
+
+        int n = rand() % 5;
+        while (n == localname - 'A') {
+            n = rand() % 5;
+        }
+        c.sendNormalPacket(c.table.hostAddrs[n].ipaddress, "TEST PACKET");
+    }
+}
+
+void *down() {
+    Sleep(10000);
+    c.sendDownPacket(Addr(localname, ip));
+}
+
+void *heartBeat() {
+    Sleep(2000);
+    c.sendHeartBeatPacket();
+}
+
 int main() {
 
-	std::vector<route> routelist;
-	char ip[SIZE] = "127.000.000.001";
-	controller test(ip, localname, PORT, routelist);
-	test.listen();
-	test.run();
+    pthread_t tids[5];
 
-    for (auto entry : test.table.routetable) {
-        cout << entry;
-    }
+	pthread_create(&tids[0], NULL, start, NULL);
+	cout << "HAHAH" << endl;
+
+	// 线程2
+    // 每隔5s发一次普通包
+	pthread_create(&tids[1], NULL, send, NULL);
+
+    /*
+    // 线程3, 发送down包
+	pthread_create(&tids[2], NULL, down, NULL);
+
+
+    // DV算法的发送心跳包
+	pthread_create(&tids[3], NULL, heartBeat, NULL);
+	*/
+    pthread_exit(NULL);
+
     return 0;
 
 }

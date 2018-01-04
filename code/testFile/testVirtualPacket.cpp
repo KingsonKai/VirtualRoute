@@ -16,7 +16,7 @@ int main() {
     char sendMessage[MAXBYTE];
     test.makePacket(received);
     test.print();
-    char message[] = "HereHere";
+    char message[] = "1111111";
     test.constructNormalPacket(sendMessage, message);
     cout << "Normal Packet: " << "len: " << strlen(sendMessage) << ' ' << sendMessage << endl;
     memset(sendMessage, 0, sizeof(sendMessage));

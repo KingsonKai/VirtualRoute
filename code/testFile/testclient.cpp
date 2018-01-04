@@ -12,7 +12,7 @@ int main()
     //新建客户端socket
     sockClient=socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
     //定义要连接的服务端地址
-    addrServer.sin_addr.S_un.S_addr=inet_addr("127.0.0.1");//目标IP(127.0.0.1是回送地址)
+    addrServer.sin_addr.S_un.S_addr=inet_addr("192.168.191.001");//目标IP(127.0.0.1是回送地址)
     addrServer.sin_family=AF_INET;
     addrServer.sin_port=htons(8080);//连接端口6000
     int len = sizeof(addrServer);
