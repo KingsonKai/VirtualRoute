@@ -7,7 +7,7 @@
 #define HAVE_STRUCT_TIMESPEC
 #include <windows.h>
 #include <pthread.h>
-// vs å¿½ç•¥strcpyå®‰å…¨æ€§é—®é¢˜
+// vs ºöÂÔstrcpy°²È«ĞÔÎÊÌâ
 #pragma warning(disable:4996)
 using namespace std;
 #include "RouteTableCode/RouteTableLS.cpp"
@@ -15,62 +15,38 @@ using namespace std;
 #define PORT 8080
 
 char ip[SIZE] = "127.000.000.001";
+char centerIP[SIZE] = "127.000.000.001";
 char localname = 'A';
 
 // controller
-// æ¥æ”¶packetï¼Œå¦‚æœåˆšæ˜¯ç»™è‡ªå·±çš„ï¼Œè§£æï¼Œå¦åˆ™è½¬å‘
-// æ¯éš”ä¸¤ç§’å‘é€ä¸€æ¬¡è·¯ç”±ä¿¡æ¯ï¼Œä»¥åŠä¾¦æµ‹åŒ…ï¼ŒæŸ¥çœ‹è‡ªå·±çš„é‚»å±…æ˜¯å¦è¿˜åœ¨æ´»åŠ¨ï¼ˆæ¶‰åŠdownæ‰çš„æƒ…å†µï¼‰
-// å‘é€packetï¼Œæ¯”å¦‚ç¡®è®¤æ”¶åˆ°ç­‰ä¿¡æ¯
+// ½ÓÊÕpacket£¬Èç¹û¸ÕÊÇ¸ø×Ô¼ºµÄ£¬½âÎö£¬·ñÔò×ª·¢
+// Ã¿¸ôÁ½Ãë·¢ËÍÒ»´ÎÂ·ÓÉĞÅÏ¢£¬ÒÔ¼°Õì²â°ü£¬²é¿´×Ô¼ºµÄÁÚ¾ÓÊÇ·ñ»¹ÔÚ»î¶¯£¨Éæ¼°downµôµÄÇé¿ö£©
+// ·¢ËÍpacket£¬±ÈÈçÈ·ÈÏÊÕµ½µÈĞÅÏ¢
 //
 
 
 class controller
 {
 public:
-	char localaddr[SIZE];         // æœ¬æœºåœ°å€
+	char localaddr[SIZE];         // ±¾»úµØÖ·
 	char name;
-	int port;                     // ç«¯å£å·
+	int port;                     // ¶Ë¿ÚºÅ
 
     /*
 	// DV
-	std::vector<route> routelist;  // é‚»å±…è·¯ç”±è¡¨
 	RouteTableDV table;			   //RouteTableLS table;
     */
 
 	// LS
 	RouteTableLS table;
 
-	SOCKET sock;              // socketæ¨¡å—
-	sockaddr_in sockAddr;         // ç»‘å®šçš„socketåœ°å€
+	SOCKET sock;              // socketÄ£¿é
+	sockaddr_in sockAddr;         // °ó¶¨µÄsocketµØÖ·
 	sockaddr_in sockClient;
 
 
-	// æœ€åä¸€æ¬¡æ”¶åˆ°é‚»å±…å‘é€çš„å¿ƒè·³åŒ…çš„æ—¶é—´
+	// ×îºóÒ»´ÎÊÕµ½ÁÚ¾Ó·¢ËÍµÄĞÄÌø°üµÄÊ±¼ä
 	vector<pair<Addr, time_t>> heartBeatTimetable;
-
-	// æ£€æµ‹é‚»å±…å­˜æ´»
-	void checkNeighbor() {
-		time_t currentTime;
-		time(&currentTime);
-		bool isChange = false;
-		for (auto p : heartBeatTimetable) {
-			double timeDiff = difftime(currentTime, p.second);
-			if (timeDiff > 2.0) {
-				if (table.setDown(p.first)) {
-					isChange = true;
-					/*
-					// LS
-					// æ£€æµ‹åˆ°æŸå°ä¸»æœºdownæ‰ï¼Œå‘é‚»å±…å‘ŠçŸ¥
-					sendDownPacket(p.first);
-					*/
-				}
-			}
-		}
-		// DV
-		if (isChange) {
-			//sendUpdatePacket();
-		}
-	}
 
 	controller(char *localaddr, char name, int port) {
 		strcpy(this->localaddr, localaddr);
@@ -82,7 +58,7 @@ public:
 		sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	}
 
-	// ç»‘å®šsocket
+	// °ó¶¨socket
 	void listen() {
 		memset(&sockAddr, 0, sizeof(sockAddr));
 		sockAddr.sin_family = AF_INET;
@@ -92,7 +68,7 @@ public:
 		cout << "Listen at PORT " << port << endl;
 	}
 
-	// startç›‘å¬
+	// start¼àÌı
 	void run() {
 		while (1) {
 			int nSize = sizeof(sockAddr);
@@ -108,7 +84,7 @@ public:
 		}
 	}
 
-	// å‘é€æ™®é€šçš„packetä¿¡æ¯ï¼Œå­—ç¬¦ä¸²å‘€ä¹±ä¸ƒå…«ç³Ÿçš„
+	// ·¢ËÍÆÕÍ¨µÄpacketĞÅÏ¢£¬×Ö·û´®Ñ½ÂÒÆß°ËÔãµÄ
 	void sendNormalPacket(char *dstip, char *message) {
 		char sendMessage[MAXBYTE];
 		Addr local(name, localaddr);
@@ -118,22 +94,7 @@ public:
 		sendPacket(sendMessage, table.getNextHop(dst));
 	}
 
-    /*
-	// å‘é€è·¯ç”±è¡¨ä¿¡æ¯,åªå‘ç»™é‚»å±…
-	void sendUpdatePacket() {
-		for (auto addr : table.getNeighbors()) {
-			char sendMessage[MAXBYTE];
-			Addr local(name, localaddr);
-			Addr dst(addr.name, addr.ipaddress);
-			virtualPacket updatePacket(1, local, dst, NULL);
-			// å‘é‚»å±…å‘é€æ›´æ–°çš„è·ç¦»çŸ¢é‡
-			updatePacket.constructRouterInfoPacket(sendMessage, table.get_my_dis_vector(dst.ipaddress));
-			sendPacket(sendMessage, table.getNextHop(dst));
-		}
-	}
-	*/
-
-	// å‘å…¶ä»–è·¯ç”±è·¯ç”±å™¨å‘é€å¿ƒè·³ç›‘æµ‹åŒ…ï¼Œç›‘æµ‹é‚»å±…æ˜¯å¦è¢«downæ‰
+	// ÏòÆäËûÂ·ÓÉÂ·ÓÉÆ÷·¢ËÍĞÄÌø¼à²â°ü£¬¼à²âÁÚ¾ÓÊÇ·ñ±»downµô
 	void sendHeartBeatPacket() {
 		for (auto addr : table.getNeighbors()) {
 			char sendMessage[MAXBYTE];
@@ -145,7 +106,7 @@ public:
 		}
 	}
 
-	// å‘é€å›å“ä¿¡æ¯ï¼Œè¡¨æ˜æ˜¯å¦æ”¶åˆ°äº†è¿™ä¸ªåŒ…
+	// ·¢ËÍ»ØÏìĞÅÏ¢£¬±íÃ÷ÊÇ·ñÊÕµ½ÁËÕâ¸ö°ü
 	void sendResponsePacket(char *dstip, char *RESPONSE) {
 		char sendMessage[MAXBYTE];
 		Addr local(name, localaddr);
@@ -159,21 +120,21 @@ public:
 	}
 
 	// LS
-	// downåŒ…åªå‘é€ç»™é‚»å±…
+	// down°üÖ»·¢ËÍ¸øÁÚ¾Ó
 	void sendDownPacket(Addr downHost) {
 		for (auto addr : table.getNeighbors()) {
 			char sendMessage[MAXBYTE];
 			Addr dst(addr.name, addr.ipaddress);
 			virtualPacket downPacket(4, downHost, dst, NULL);
 			downPacket.constructDownPacket(sendMessage);
-			// ç›®çš„åœ°æ˜¯é‚»å±…ï¼Œç›®çš„IPç›´æ¥å¡«ç›®çš„åœ°å€
+			// Ä¿µÄµØÊÇÁÚ¾Ó£¬Ä¿µÄIPÖ±½ÓÌîÄ¿µÄµØÖ·
 			sendPacket(sendMessage, dst.ipaddress);
 		}
 	}
 
-	// å¤„ç†æ¥æ”¶çš„åŒ…ï¼Œæ ¹æ®packetç±»å‹è°ƒç”¨ä»¥ä¸‹å››ç§å¤„ç†æ–¹å¼
+	// ´¦Àí½ÓÊÕµÄ°ü£¬¸ù¾İpacketÀàĞÍµ÷ÓÃÒÔÏÂËÄÖÖ´¦Àí·½Ê½
 	void handleReceivedPacket(char *recvBuf) {
-		/* å°†æ”¶åˆ°çš„å­—ç¬¦ä¸²æ•°æ®è½¬åŒ–ä¸ºæ•°æ®åŒ…æ ¼å¼ */
+		/* ½«ÊÕµ½µÄ×Ö·û´®Êı¾İ×ª»¯ÎªÊı¾İ°ü¸ñÊ½ */
 		virtualPacket packet;
 		packet.makePacket(recvBuf);
 		if (packet.type == 0) {
@@ -195,9 +156,9 @@ public:
 		*/
 	}
 
-	/* å¤„ç†æ™®é€šçš„åŒ…
-	å¦‚æœç›®çš„åœ°å€æ˜¯è‡ªå·±åˆ™å°†åŒ…çš„å†…å®¹è¾“å‡º
-	å¦åˆ™æ ¹æ®ç›®çš„åœ°å€è½¬å‘
+	/* ´¦ÀíÆÕÍ¨µÄ°ü
+	Èç¹ûÄ¿µÄµØÖ·ÊÇ×Ô¼ºÔò½«°üµÄÄÚÈİÊä³ö
+	·ñÔò¸ù¾İÄ¿µÄµØÖ·×ª·¢
 	*/
 	void handleNormalPacket(virtualPacket packet) {
 		if (strcmp(packet.getDst().ipaddress, localaddr) == 0) {
@@ -209,91 +170,21 @@ public:
 		}
 	}
 
-	// è½¬å‘æ™®é€šçš„åŒ…
+	// ×ª·¢ÆÕÍ¨µÄ°ü
 	void forward(virtualPacket packet) {
 	    cout << "From " << packet.getSource().ipaddress <<  "Forward To: " << packet.getDst().ipaddress << endl;
 		sendPacket(packet.getRecvBuf(), table.getNextHop(packet.getDst()));
 	}
 
-	/* å¤„ç†è·¯ç”±è¡¨ä¿¡æ¯æ›´æ–°åŒ…
-	è°ƒç”¨DVç®—æ³•æ›´æ–°è·¯ç”±è¡¨
-	å‘é‚»å±…è½¬å‘æ›´æ–°ä¿¡æ¯
-	*/
-	/*
-	void handleUpdatePacket(virtualPacket packet) {
-		char source[20];
-		char dst[20];
-		strcpy(dst, packet.getDst().ipaddress);
-		strcpy(source, packet.getSource().ipaddress);
-		if (strcmp(dst, localaddr) == 0) {
-			vector<int> disVector = packet.analyzeUpdatePacket();
-			if (table.DValgorithm(disVector, table.getHostName(source))) {
-				sendUpdatePacket();
-			}
-		}
-	}
-	*/
-
-	// å¤„ç†å¿ƒè·³æ£€æµ‹åŒ…
-	void handleHeartBeatPacket(virtualPacket packet) {
-		// è‹¥æœ‰æ”¶åˆ°ï¼Œå›åº”ä¸»æœºï¼Œç›®å‰æ­£åœ¨å·¥ä½œ
-		if (strcmp(packet.getDst().ipaddress, localaddr) == 0) {
-			time_t receiveTime;
-			time(&receiveTime);
-			Addr sourceAddr = packet.getSource();
-			updateHeartBeatTimetable(sourceAddr, receiveTime);
-		}
-	}
-
-	// æ›´æ–°è®°å½•æ”¶åˆ°çš„æ¯ä¸ªé‚»å±…çš„å¿ƒè·³åŒ…çš„æœ€åæ—¶é—´
-	void updateHeartBeatTimetable(Addr sourceAddr, time_t receiveTime) {
-		for (auto p : heartBeatTimetable) {
-			if (p.first == sourceAddr) {
-				p.second = receiveTime;
-			}
-		}
-	}
-
-	// å¤„ç†å“åº”åŒ…
+	// ´¦ÀíÏìÓ¦°ü
 	void handleResponsePacket(virtualPacket packet) {
 		if (strcmp(packet.getDst().ipaddress, localaddr) == 0) {
 			cout << "packet to IP : " << packet.getSource().ipaddress << " is received" << endl;
 		}
 	}
 
-	// LS
-	/* å¤„ç†æ¥æ”¶åˆ°çš„downåŒ…
-	æ ¹æ®æ¥æ”¶åˆ°çš„downåŒ…æ›´æ–°è‡ªå·±çš„è·¯ç”±è¡¨
-	å¹¶å°†è‡ªå·±çš„æ›´æ–°ä¿¡æ¯è½¬å‘
-	*/
-	void handleDownPacket(virtualPacket packet) {
-		char source[20];
-		char dst[20];
-		strcpy(source, packet.getSource().ipaddress);
-		strcpy(dst, packet.getDst().ipaddress);
-
-		// LS
-		if (strcmp(dst, localaddr) == 0) {
-			if (table.setDown(packet.getSource())) {
-				forwardDownPacket(packet);
-			}
-		}
-
-	}
-
-	// LS
-	/* è½¬å‘DownåŒ…ç»™é‚»å±…
-	æºIPåœ°å€ä¸å˜,æ”¹å˜ç›®çš„IPåœ°å€
-	*/
-	void forwardDownPacket(virtualPacket packet) {
-		for (auto addr : table.getNeighbors()) {
-			packet.changeDstIP(addr.ipaddress);
-			sendPacket(packet.getRecvBuf(), addr.ipaddress);
-		}
-	}
-
 	SOCKADDR_IN sendPacket(char *sendMessage, char *dst) {
-		SOCKADDR_IN addr_Server; //æœåŠ¡å™¨çš„åœ°å€ç­‰ä¿¡æ¯
+		SOCKADDR_IN addr_Server; //·şÎñÆ÷µÄµØÖ·µÈĞÅÏ¢
 		addr_Server.sin_family = AF_INET;
 		addr_Server.sin_port = htons(PORT);
 		addr_Server.sin_addr.S_un.S_addr = inet_addr(dst);
@@ -345,16 +236,16 @@ int main() {
 
 	pthread_create(&tids[0], NULL, start, NULL);
 
-	// çº¿ç¨‹2
-    // æ¯éš”5så‘ä¸€æ¬¡æ™®é€šåŒ…
+	// Ïß³Ì2
+    // Ã¿¸ô5s·¢Ò»´ÎÆÕÍ¨°ü
 	pthread_create(&tids[1], NULL, send, NULL);
 
     /*
-    // çº¿ç¨‹3, å‘é€downåŒ…
+    // Ïß³Ì3, ·¢ËÍdown°ü
 	pthread_create(&tids[2], NULL, down, NULL);
 
 
-    // DVç®—æ³•çš„å‘é€å¿ƒè·³åŒ…
+    // DVËã·¨µÄ·¢ËÍĞÄÌø°ü
 	pthread_create(&tids[3], NULL, heartBeat, NULL);
 	*/
     pthread_exit(NULL);
