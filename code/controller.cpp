@@ -14,7 +14,7 @@ using namespace std;
 #include "virtualPacket.cpp"
 #define PORT 8080
 
-char ip[SIZE] = "192.168.191.001";
+char ip[SIZE] = "192.168.199.103";
 char localname = 'A';
 
 // controller
@@ -80,7 +80,6 @@ public:
 			int ret = recvfrom(sock, recvBuf, MAXBYTE, 0, (SOCKADDR*)&sockClient, &nSize);
 			if (ret > 0) {
 			    recvBuf[ret] = '\0';
-                cout << strlen(recvBuf) << endl;
 				handleReceivedPacket(recvBuf);
 			}
 		}
@@ -95,11 +94,7 @@ public:
 			if (timeDiff > 2.0) {
 				if (table.setDown(p.first)) {
 					isChange = true;
-					/*
-					// LS
-					// 检测到某台主机down掉，向邻居告知
 					sendDownPacket(p.first);
-					*/
 				}
 			}
 		}
@@ -155,7 +150,6 @@ public:
 		char message[MAXBYTE];
 		strcpy(message, RESPONSE);
 		responsePacket.constructResponsePacket(sendMessage, message);
-		cout << sendMessage << endl;
 		sendPacket(sendMessage, dst.ipaddress);
 	}
 
@@ -202,7 +196,6 @@ public:
 	*/
 	void handleNormalPacket(virtualPacket packet) {
 		if (strcmp(packet.getDst().ipaddress, localaddr) == 0) {
-			packet.print();
 			sendResponsePacket(packet.getSource().ipaddress, "I have received");
 		}
 		else {
@@ -212,7 +205,7 @@ public:
 
 	// 转发普通的包
 	void forward(virtualPacket packet) {
-	    cout << "From " << packet.getSource().ipaddress <<  "Forward To: " << packet.getDst().ipaddress << endl;
+	    cout << "From " << table.getHostName(packet.getSource().ipaddress) <<  "Forward To: " << table.getHostName(packet.getDst().ipaddress) << endl;
 		sendPacket(packet.getRecvBuf(), table.getNextHop(packet.getDst()));
 	}
 
@@ -258,7 +251,7 @@ public:
 	// 处理响应包
 	void handleResponsePacket(virtualPacket packet) {
 		if (strcmp(packet.getDst().ipaddress, localaddr) == 0) {
-			cout << "packet to IP : " << packet.getSource().ipaddress << " is received" << endl;
+			cout << "packet to IP : " << table.getHostName(packet.getSource().ipaddress) << " is received" << endl;
 		}
 	}
 
@@ -298,7 +291,7 @@ public:
             cout << "Can reach! Maybe it's down" << endl;
             return;
 	    }
-	    cout << "Send TO: " << dst << " Content: " << sendMessage << endl;
+	    cout << "Send TO: " << table.getHostName(dst) << " Content: " << sendMessage << endl;
 		SOCKADDR_IN addr_Server; //服务器的地址等信息
 		addr_Server.sin_family = AF_INET;
 		addr_Server.sin_port = htons(PORT);
@@ -334,12 +327,12 @@ void *send(void *args) {
     }
 }
 
-void *down() {
+void *down(void *args) {
     Sleep(10000);
     c.sendDownPacket(Addr(localname, ip));
 }
 
-void *heartBeat() {
+void *heartBeat(void *args) {
     Sleep(2000);
     c.sendHeartBeatPacket();
 }
@@ -354,14 +347,8 @@ int main() {
     // 每隔5s发一次普通包
 	pthread_create(&tids[1], NULL, send, NULL);
 
-    /*
-    // 线程3, 发送down包
-	pthread_create(&tids[2], NULL, down, NULL);
+	pthread_create(&tids[2], NULL, heartBeat, NULL);
 
-
-    // DV算法的发送心跳包
-	pthread_create(&tids[3], NULL, heartBeat, NULL);
-	*/
     pthread_exit(NULL);
 
     return 0;

@@ -6,8 +6,7 @@
 #include<iterator>
 using namespace std;
 
-class RouteTableLS
-{
+class RouteTableLS {
 public:
 	vector<routeTableEntry> routetable;
 	// 存储网络拓补图的链路信息，char类型为主机的名字ABCD
@@ -17,11 +16,11 @@ public:
 	RouteTableLS(char name='A') {
 		myHostName = name;
 		//获取所有hostAddrs,0对应A的信息
-		char ipA[SIZE] = "192.168.191.001";
-		char ipB[SIZE] = "172.018.156.076";
-		char ipC[SIZE] = "172.018.159.066";
-		char ipD[SIZE] = "172.018.159.150";
-		char ipE[SIZE] = "172.018.158.165";
+		char ipA[SIZE] = "192.168.199.103";
+		char ipB[SIZE] = "192.168.199.122";
+		char ipC[SIZE] = "192.168.199.160";
+		char ipD[SIZE] = "192.168.199.231";
+		char ipE[SIZE] = "192.168.199.198";
 		hostAddrs.push_back(Addr('A', ipA));
 		hostAddrs.push_back(Addr('B', ipB));//赋值后是多少位
 		hostAddrs.push_back(Addr('C', ipC));

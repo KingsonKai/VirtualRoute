@@ -27,7 +27,7 @@ void sendPacket(char *sendMessage, char *dst) {
 }
 
 void ini() {
-    char ipA[SIZE] = "172.018.157.159";
+    char ipA[SIZE] = "192.168.191.001";
     char ipB[SIZE] = "172.018.156.076";
     char ipC[SIZE] = "172.018.159.066";
     char ipD[SIZE] = "172.018.159.150";
