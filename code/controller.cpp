@@ -14,8 +14,10 @@ using namespace std;
 #include "virtualPacket.cpp"
 #define PORT 8080
 
-char ip[SIZE] = "192.168.199.103";
-char localname = 'A';
+
+char ip[SIZE] = "192.168.199.231";
+char localname = 'D';
+
 
 // controller
 // 接收packet，如果刚是给自己的，解析，否则转发
@@ -55,7 +57,7 @@ public:
 		strcpy(this->localaddr, localaddr);
 		this->port = port;
 		this->name = name;
-		table = RouteTableLS('A');
+		table = RouteTableLS('D');
 		WSADATA wsaData;
 		WSAStartup(MAKEWORD(2, 2), &wsaData);
 		sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
