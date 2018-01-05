@@ -91,7 +91,9 @@ public:
 		bool isChange = false;
 		for (auto p : heartBeatTimetable) {
 			double timeDiff = difftime(currentTime, p.second);
+			cout << "TimeDIFF " << timeDiff << endl;
 			if (timeDiff > 2.0) {
+                cout << "Router is down" << p.first.ipaddress << endl;
 				if (table.setDown(p.first)) {
 					isChange = true;
 					sendDownPacket(p.first);
@@ -315,6 +317,14 @@ public:
 
 controller c(ip, localname, PORT);
 
+void iniHearbeatTimeTable() {
+    time_t currentTime;
+    time(&currentTime);
+    for (int i = 0; i < 5; i++) {
+        c.heartBeatTimetable.push_back(make_pair(c.table.hostAddrs[i], currentTime));
+    }
+}
+
 void *start(void *args) {
     c.listen();
     c.run();
@@ -339,12 +349,16 @@ void *down(void *args) {
 }
 
 void *heartBeat(void *args) {
-    Sleep(2000);
-    c.sendHeartBeatPacket();
-    c.checkNeighbor();
+    while(1) {
+        Sleep(2000);
+        c.sendHeartBeatPacket();
+        c.checkNeighbor();
+    }
 }
 
 int main() {
+
+    iniHearbeatTimeTable();
 
     pthread_t tids[5];
 
