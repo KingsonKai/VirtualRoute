@@ -107,7 +107,7 @@ public:
 		sendMessage[0] = '2';
 		writeAddress(sendMessage);
 		char content[] = "I am alive!";
-		strcpy(sendMessage, content);
+		strcat(sendMessage, content);
 	}
 
 	// 打包响应包
@@ -116,6 +116,12 @@ public:
 		writeAddress(sendMessage);
 		strcat(sendMessage, content);
 	}
+
+    void constructRequestPacket(char *sendMessage) {
+        sendMessage[0] = '5';
+        writeAddress(sendMessage);
+        strcat(sendMessage, message);
+    }
 
 	// LS
 	// 只改变包的目的IP地址，其他不变

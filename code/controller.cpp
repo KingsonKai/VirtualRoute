@@ -14,7 +14,7 @@ using namespace std;
 #include "virtualPacket.cpp"
 #define PORT 8080
 
-char ip[SIZE] = "127.000.000.001";
+char ip[SIZE] = "192.168.191.001";
 char localname = 'A';
 
 // controller
@@ -55,6 +55,7 @@ public:
 		strcpy(this->localaddr, localaddr);
 		this->port = port;
 		this->name = name;
+		table = RouteTableLS('A');
 		WSADATA wsaData;
 		WSAStartup(MAKEWORD(2, 2), &wsaData);
 		sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -82,7 +83,6 @@ public:
                 cout << strlen(recvBuf) << endl;
 				handleReceivedPacket(recvBuf);
 			}
-			// getPack or forward packet
 		}
 	}
 
@@ -293,16 +293,18 @@ public:
 		}
 	}
 
-	SOCKADDR_IN sendPacket(char *sendMessage, char *dst) {
-	    if (strcmp(dst, "0.0.0.0") == 0)
+	void sendPacket(char *sendMessage, char *dst) {
+	    if (strcmp(dst, "0.0.0.0") == 0) {
             cout << "Can reach! Maybe it's down" << endl;
+            return;
+	    }
+	    cout << "Send TO: " << dst << " Content: " << sendMessage << endl;
 		SOCKADDR_IN addr_Server; //服务器的地址等信息
 		addr_Server.sin_family = AF_INET;
 		addr_Server.sin_port = htons(PORT);
 		addr_Server.sin_addr.S_un.S_addr = inet_addr(dst);
 
 		sendto(sock, sendMessage, strlen(sendMessage), 0, (SOCKADDR*)&addr_Server, sizeof(SOCKADDR));
-		return addr_Server;
 	}
 
 	~controller() {

@@ -11,12 +11,12 @@
 // vs 忽略strcpy安全性问题
 #pragma warning(disable:4996)
 using namespace std;
-#include "RouteTableCode/RouteTableLS.cpp"
-#include "virtualPacket.cpp"
+#include "../RouteTableCode/RouteTableLS.cpp"
+#include "../virtualPacket.cpp"
 #define PORT 8888
 
 char ip[SIZE] = "127.000.000.001";
-char localname = 'A';
+char centerName = 'A';
 
 // controller
 // 接收packet，如果刚是给自己的，解析，否则转发
@@ -52,7 +52,9 @@ public:
 		strcpy(this->localaddr, localaddr);
 		this->port = port;
 		this->name = name;
-		table = RouteTableLS(name);
+        for (int i = 0; i < 5; i++) {
+            table[i] = RouteTableLS(char(i+'A'));
+        }
 		WSADATA wsaData;
 		WSAStartup(MAKEWORD(2, 2), &wsaData);
 		sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -77,7 +79,8 @@ public:
 			int ret = recvfrom(sock, recvBuf, MAXBYTE, 0, (SOCKADDR*)&sockClient, &nSize);
 			if (ret > 0) {
 			    recvBuf[ret] = '\0';
-                cout << strlen(recvBuf) << endl;
+                cout << strlen(recvBuf) << " ";
+                cout << recvBuf << endl;
 				handleReceivedPacket(recvBuf);
 			}
 		}
@@ -164,27 +167,31 @@ public:
 
 		// LS
 		if (strcmp(dst, localaddr) == 0) {
-			for (int i = 0; i < table.size(); i++) {
+			for (int i = 0; i < 5; i++) {
                 table[i].setDown(packet.getSource());
 			}
 		}
 	}
 
 	void handleRequestPacket(virtualPacket packet) {
-        char routername = table[0].getHostName(packet.getSource().ipaddress);
-        char nextHop[] = table[routername-'A'].getNextHop(packet.getDst());
+        char routername = table[0].getHostName(packet.getDst().ipaddress);
+        cout << "Routename: " << routername << endl;
+        char nextHop[16];
+        strcpy(nextHop, table[routername-'A'].getNextHop(packet.getDst()));
+        cout << nextHop << endl;
         int len = sizeof(SOCKADDR);
-        sendto(sock, nextHop, strlen(nextHop), 0, sockClient, len);
+        sendto(sock, nextHop, strlen(nextHop), 0, (SOCKADDR*)&sockClient, len);
 	}
 
-	~controller() {
+	~center() {
 		closesocket(sock);
 		WSACleanup();
 		cout << "Server Socketreleased" << endl;
 	}
 };
 
-center c(ip, localname, PORT);
+center c(ip, centerName, PORT);
+
 
 void *start(void *args) {
     c.listen();
@@ -200,7 +207,6 @@ int main() {
     pthread_t tids[5];
 
 	pthread_create(&tids[0], NULL, start, NULL);
-
 	pthread_create(&tids[1], NULL, check, NULL);
 
     pthread_exit(NULL);

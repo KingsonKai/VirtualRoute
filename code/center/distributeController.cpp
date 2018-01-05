@@ -10,14 +10,15 @@
 // vs 忽略strcpy安全性问题
 #pragma warning(disable:4996)
 using namespace std;
-#include "RouteTableCode/RouteTableLS.cpp"
-#include "virtualPacket.cpp"
+#include "../RouteTableCode/RouteTableLS.cpp"
+#include "../virtualPacket.cpp"
 #define PORT 8080
-#define cneterPORT 8888
+#define centerPORT 8888
 
 char ip[SIZE] = "127.000.000.001";
 char centerIP[SIZE] = "127.000.000.001";
 char localname = 'A';
+pthread_mutex_t work_mutex;   // 声明互斥变量
 
 // controller
 // 接收packet，如果刚是给自己的，解析，否则转发
@@ -35,7 +36,6 @@ public:
 
 	SOCKET sock;              // socket模块
 	sockaddr_in sockAddr;         // 绑定的socket地址
-	sockaddr_in sockClient;
 
 
 	// 最后一次收到邻居发送的心跳包的时间
@@ -63,12 +63,14 @@ public:
 	// start监听
 	void run() {
 		while (1) {
+            SOCKADDR_IN sockClient;
 			int nSize = sizeof(sockAddr);
 
 			char recvBuf[MAXBYTE];
 			int ret = recvfrom(sock, recvBuf, MAXBYTE, 0, (SOCKADDR*)&sockClient, &nSize);
 			if (ret > 0) {
 			    recvBuf[ret] = '\0';
+			    cout << recvBuf << endl;
                 cout << strlen(recvBuf) << endl;
 				handleReceivedPacket(recvBuf);
 			}
@@ -93,7 +95,7 @@ public:
         Addr dst('O', centerIP);
         virtualPacket heartbeatPacket(2, local, dst, NULL);
         heartbeatPacket.constructHeartBeatPacket(sendMessage);
-        sendPacket(sendMessage, dst.ipaddress);
+        sendPacketToCenter(sendMessage);
 	}
 
 	// 发送回响信息，表明是否收到了这个包
@@ -115,7 +117,7 @@ public:
         Addr dst('0', centerIP);
         virtualPacket downPacket(4, downHost, dst, NULL);
         downPacket.constructDownPacket(sendMessage);
-        sendPacket(sendMessage, dst.ipaddress);
+        sendPacketToCenter(sendMessage);
 	}
 
 	// 处理接收的包，根据packet类型调用以下四种处理方式
@@ -125,12 +127,6 @@ public:
 		packet.makePacket(recvBuf);
 		if (packet.type == 0) {
 			handleNormalPacket(packet);
-		}
-		else if (packet.type == 1) {
-			//handleUpdatePacket(packet);
-		}
-		else if (packet.type == 2) {
-			handleHeartBeatPacket(packet);
 		}
 		else if (packet.type == 3) {
 			handleResponsePacket(packet);
@@ -170,6 +166,9 @@ public:
 	}
 
 	SOCKADDR_IN sendPacket(char *sendMessage, char *dst) {
+	    if (strcmp(dst, "0.0.0.0") == 0) {
+            cout << "Can't reach! Maybe it's down" << endl;
+	    }
 		SOCKADDR_IN addr_Server; //服务器的地址等信息
 		addr_Server.sin_family = AF_INET;
 		addr_Server.sin_port = htons(PORT);
@@ -180,7 +179,29 @@ public:
 	}
 
 	char *getNextHop(Addr a) {
+		Addr local(name, localaddr);
+		virtualPacket request(5, local, a, "requestnexthop");
+        char sendMessage[MAXBYTE];
+        request.constructRequestPacket(sendMessage);
+        auto addr_Server = sendPacketToCenter(sendMessage);
 
+        int len = sizeof(SOCKADDR);
+        char recvBuf[MAXBYTE];
+        int ret = recvfrom(sock, recvBuf, MAXBYTE, 0,(SOCKADDR*)&addr_Server, &len);
+        recvBuf[ret] = '\0';
+        cout << "Request Next hop is: " << recvBuf << endl;
+        return recvBuf;
+	}
+
+	SOCKADDR_IN sendPacketToCenter(char *sendMessage) {
+        SOCKADDR_IN addr_Server;
+        int nSize = sizeof(addr_Server);
+        addr_Server.sin_family = AF_INET;
+		addr_Server.sin_port = htons(centerPORT);
+		addr_Server.sin_addr.S_un.S_addr = inet_addr(centerIP);
+        sendto(sock, sendMessage, strlen(sendMessage), 0, (SOCKADDR*)&addr_Server, nSize);
+
+        return addr_Server;
 	}
 
 	~controller() {
@@ -191,6 +212,7 @@ public:
 };
 
 controller c(ip, localname, PORT);
+vector<Addr> hostAddrs;
 
 void *start(void *args) {
     c.listen();
@@ -206,23 +228,37 @@ void *send(void *args) {
         while (n == localname - 'A') {
             n = rand() % 5;
         }
-        c.sendNormalPacket(c.table.hostAddrs[n].ipaddress, "TEST PACKET");
+        c.sendNormalPacket(hostAddrs[n].ipaddress, "TEST PACKET");
     }
 }
 
-void *down() {
+void *down(void *args) {
     Sleep(10000);
     c.sendDownPacket(Addr(localname, ip));
 }
 
-void *heartBeat() {
+void *heartBeat(void *args) {
     Sleep(2000);
     c.sendHeartBeatPacket();
 }
 
-int main() {
+void ini() {
+    char ipA[SIZE] = "172.018.157.159";
+    char ipB[SIZE] = "172.018.156.076";
+    char ipC[SIZE] = "172.018.159.066";
+    char ipD[SIZE] = "172.018.159.150";
+    char ipE[SIZE] = "172.018.158.165";
+    hostAddrs.push_back(Addr('A', ipA));
+    hostAddrs.push_back(Addr('B', ipB));//赋值后是多少位
+    hostAddrs.push_back(Addr('C', ipC));
+    hostAddrs.push_back(Addr('D', ipD));
+    hostAddrs.push_back(Addr('E', ipE));
+}
 
+int main() {
+    ini();
     pthread_t tids[5];
+    pthread_mutex_init(&work_mutex, NULL);
 
 	pthread_create(&tids[0], NULL, start, NULL);
 
@@ -230,14 +266,15 @@ int main() {
     // 每隔5s发一次普通包
 	pthread_create(&tids[1], NULL, send, NULL);
 
-    /*
+
     // 线程3, 发送down包
-	pthread_create(&tids[2], NULL, down, NULL);
+	//pthread_create(&tids[2], NULL, down, NULL);
 
 
     // DV算法的发送心跳包
 	pthread_create(&tids[3], NULL, heartBeat, NULL);
-	*/
+
+    pthread_mutex_destroy(&work_mutex);
     pthread_exit(NULL);
 
     return 0;

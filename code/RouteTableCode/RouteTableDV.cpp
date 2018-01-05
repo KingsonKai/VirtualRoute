@@ -159,11 +159,13 @@ public:
 	}
 
 	char* getNextHop(Addr dst) {   // 获得下一跳路由器
+	    dst.name = getHostName(dst.ipaddress);
 		for (int i = 0; i < routetable.size(); i++) {
 			if (routetable[i].addr.name == dst.name) return routetable[i].nexthop;
 		}
 		return ("0.0.0.0");//默认返回
 	}
+
 	void print() {
 		for (auto v : routetable) {
 			cout << "destName: " << v.addr.name << endl;
@@ -190,6 +192,14 @@ public:
 			}
 		}
 		return temp;
+	}
+
+		// 从IP到主机名的转换
+	char getHostName(char *ip) {
+        for (auto addr : hostAddrs) {
+            if (strcmp(addr.ipaddress, ip) == 0)
+                return addr.name;
+        }
 	}
 	/*
 	bool setdown(char a) {

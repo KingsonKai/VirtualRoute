@@ -17,7 +17,7 @@ public:
 	RouteTableLS(char name='A') {
 		myHostName = name;
 		//获取所有hostAddrs,0对应A的信息
-		char ipA[SIZE] = "172.018.157.159";
+		char ipA[SIZE] = "192.168.191.001";
 		char ipB[SIZE] = "172.018.156.076";
 		char ipC[SIZE] = "172.018.159.066";
 		char ipD[SIZE] = "172.018.159.150";
@@ -27,6 +27,7 @@ public:
 		hostAddrs.push_back(Addr('C', ipC));
 		hostAddrs.push_back(Addr('D', ipD));
 		hostAddrs.push_back(Addr('E', ipE));
+
 		//获取整体拓扑结构,暂时手动输入获取,后期可以尝试动态修改，就是创建了UI之后启动程序让用户输入边数和边权
 		networkGraph['A'] = vector<pathInfo>{
 			pathInfo(hostAddrs[0], hostAddrs['C' - 'A'], 3),
@@ -86,6 +87,7 @@ public:
 	}
 
 	char* getNextHop(Addr dst) {   // 获得下一跳路由器
+        dst.name = getHostName(dst.ipaddress);
 		for (int i = 0; i < routetable.size(); i++) {
 			if (routetable[i].addr.name == dst.name) return routetable[i].nexthop;
 		}
