@@ -24,6 +24,7 @@ public:
 
 	// 根据要发送的message，构建好字符流，调用strncpy复制到sendMessage中
 	void constructNormalPacket(char *sendMessage, char* content) {
+	    memset(sendMessage, 0, sizeof(sendMessage));
 		sendMessage[0] = '0';
 		writeAddress(sendMessage);
 		strcat(sendMessage, content);
@@ -32,6 +33,7 @@ public:
 	// LS
 	// 打包down包信息
 	void constructDownPacket(char *sendMessage) {
+	    memset(sendMessage, 0, sizeof(sendMessage));
 		sendMessage[0] = '4';
 		writeAddress(sendMessage);
 		char content[] = "someone is down!";
@@ -44,6 +46,7 @@ public:
 	代表每个数字的字符串之间用*隔开
 	*/
 	void constructRouterInfoPacket(char *sendMessage, vector<int> Nei_dis) {
+	    memset(sendMessage, 0, sizeof(sendMessage));
 		sendMessage[0] = '1';
 		writeAddress(sendMessage);
 		for (int i = 0; i < Nei_dis.size(); ++i) {
@@ -83,6 +86,7 @@ public:
 	/*
 	// 打包路由表信息
 	void constructRouterInfoPacket(char *sendMessage, std::vector<routeTableEntry> routeTable) {
+        memset(sendMessage, 0, sizeof(sendMessage));
 		sendMessage[0] = '1';
 		writeAddress(sendMessage + 1);
 		char routeMessage[MAXBYTE];
@@ -104,6 +108,7 @@ public:
 
 	// 打包心跳检测信息
 	void constructHeartBeatPacket(char *sendMessage) {
+	    memset(sendMessage, 0, sizeof(sendMessage));
 		sendMessage[0] = '2';
 		writeAddress(sendMessage);
 		char content[] = "I am alive!";
@@ -112,12 +117,14 @@ public:
 
 	// 打包响应包
 	void constructResponsePacket(char *sendMessage, char *content) {
+	    memset(sendMessage, 0, sizeof(sendMessage));
 		sendMessage[0] = '3';
 		writeAddress(sendMessage);
 		strcat(sendMessage, content);
 	}
 
     void constructRequestPacket(char *sendMessage) {
+        memset(sendMessage, 0, sizeof(sendMessage));
         sendMessage[0] = '5';
         writeAddress(sendMessage);
         strcat(sendMessage, message);
