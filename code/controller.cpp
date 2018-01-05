@@ -111,6 +111,9 @@ public:
 		Addr dst('1', dstip);
 		virtualPacket normalPacket(0, local, dst, NULL);
 		normalPacket.constructNormalPacket(sendMessage, message);
+		if (strcmp("0.0.0.0", table.getNextHop(dst)) == 0) {
+            cout << dstip << " Can't reach" << endl;
+		}
 		sendPacket(sendMessage, table.getNextHop(dst));
 	}
 
@@ -206,6 +209,9 @@ public:
 	// 转发普通的包
 	void forward(virtualPacket packet) {
 	    cout << "From " << table.getHostName(packet.getSource().ipaddress) <<  "Forward To: " << table.getHostName(packet.getDst().ipaddress) << endl;
+		if (strcmp("0.0.0.0", table.getNextHop(packet.getDst())) == 0) {
+            cout << packet.getDst().ipaddress << " Can't reach" << endl;
+		}
 		sendPacket(packet.getRecvBuf(), table.getNextHop(packet.getDst()));
 	}
 
@@ -335,6 +341,7 @@ void *down(void *args) {
 void *heartBeat(void *args) {
     Sleep(2000);
     c.sendHeartBeatPacket();
+    c.checkNeighbor();
 }
 
 int main() {
