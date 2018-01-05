@@ -17,16 +17,16 @@ public:
 	map<char, vector<pathInfo>> networkGraph;//只有自己到自己邻居的边
 	vector<Addr> hostAddrs; // IP和地址的映射
 	char myHostName;//本机主机名
-	RouteTableDV(char name = 'A') {
+	RouteTableDV(char name = 'D') {
 		myTable = vector<vector<int>>(5, vector<int>(5, 9999));
 		Dis_vector = vector<int>(5, 9999);
 		myHostName = name;
 		//获取所有hostAddrs,0对应A的信息
-		hostAddrs.push_back(Addr('A', "172.018.157.159"));
-		hostAddrs.push_back(Addr('B', "172.018.156.076"));
-		hostAddrs.push_back(Addr('C', "172.018.159.066"));
-		hostAddrs.push_back(Addr('D', "172.018.159.150"));
-		hostAddrs.push_back(Addr('E', "172.018.158.165"));
+		hostAddrs.push_back(Addr('A', "192.168.199.198"));
+		hostAddrs.push_back(Addr('B', "192.168.199.122"));
+		hostAddrs.push_back(Addr('C', "192.168.199.160"));
+		hostAddrs.push_back(Addr('D', "192.168.199.231"));
+		hostAddrs.push_back(Addr('E', "192.168.199.198"));
 		//初始自己的路由表
 		if (myHostName == 'A') {
 			networkGraph['A'] = vector<pathInfo>{

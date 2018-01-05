@@ -14,14 +14,14 @@ public:
 	map<char, vector<pathInfo>> networkGraph;//整个网络拓扑图的边,networkGraph['A']包括所有从A出发的边
 	vector<Addr> hostAddrs;  //方便主机名和ip地址的转换
 	char myHostName;//本机主机名
-	RouteTableLS(char name='A') {
+	RouteTableLS(char name='D') {
 		myHostName = name;
 		//获取所有hostAddrs,0对应A的信息
-		char ipA[SIZE] = "192.168.191.001";
-		char ipB[SIZE] = "172.018.156.076";
-		char ipC[SIZE] = "172.018.159.066";
-		char ipD[SIZE] = "172.018.159.150";
-		char ipE[SIZE] = "172.018.158.165";
+		char ipA[SIZE] = "192.168.199.103";
+		char ipB[SIZE] = "192.168.199.122";
+		char ipC[SIZE] = "192.168.199.160";
+		char ipD[SIZE] = "192.168.199.231";
+		char ipE[SIZE] = "192.168.199.198";
 		hostAddrs.push_back(Addr('A', ipA));
 		hostAddrs.push_back(Addr('B', ipB));//赋值后是多少位
 		hostAddrs.push_back(Addr('C', ipC));
