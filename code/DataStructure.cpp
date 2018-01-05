@@ -14,7 +14,7 @@ public:
     }
 
 	bool operator==(Addr other) {
-		if (name == other.name && strcmp(ipaddress, other.ipaddress)) {
+		if (name == other.name && strcmp(ipaddress, other.ipaddress) == 0) {
 			return true;
 		}
 		else {
