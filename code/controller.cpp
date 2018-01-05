@@ -49,34 +49,12 @@ public:
 	vector<pair<Addr, time_t>> heartBeatTimetable;
 
 	// 检测邻居存活
-	void checkNeighbor() {
-		time_t currentTime;
-		time(&currentTime);
-		bool isChange = false;
-		for (auto p : heartBeatTimetable) {
-			double timeDiff = difftime(currentTime, p.second);
-			if (timeDiff > 2.0) {
-				if (table.setDown(p.first)) {
-					isChange = true;
-					/*
-					// LS
-					// 检测到某台主机down掉，向邻居告知
-					sendDownPacket(p.first);
-					*/
-				}
-			}
-		}
-		// DV
-		if (isChange) {
-			//sendUpdatePacket();
-		}
-	}
+
 
 	controller(char *localaddr, char name, int port) {
 		strcpy(this->localaddr, localaddr);
 		this->port = port;
 		this->name = name;
-		table = RouteTableLS(name);
 		WSADATA wsaData;
 		WSAStartup(MAKEWORD(2, 2), &wsaData);
 		sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -105,6 +83,29 @@ public:
 				handleReceivedPacket(recvBuf);
 			}
 			// getPack or forward packet
+		}
+	}
+
+    void checkNeighbor() {
+		time_t currentTime;
+		time(&currentTime);
+		bool isChange = false;
+		for (auto p : heartBeatTimetable) {
+			double timeDiff = difftime(currentTime, p.second);
+			if (timeDiff > 2.0) {
+				if (table.setDown(p.first)) {
+					isChange = true;
+					/*
+					// LS
+					// 检测到某台主机down掉，向邻居告知
+					sendDownPacket(p.first);
+					*/
+				}
+			}
+		}
+		// DV
+		if (isChange) {
+			//sendUpdatePacket();
 		}
 	}
 
@@ -293,6 +294,8 @@ public:
 	}
 
 	SOCKADDR_IN sendPacket(char *sendMessage, char *dst) {
+	    if (strcmp(dst, "0.0.0.0") == 0)
+            cout << "Can reach! Maybe it's down" << endl;
 		SOCKADDR_IN addr_Server; //服务器的地址等信息
 		addr_Server.sin_family = AF_INET;
 		addr_Server.sin_port = htons(PORT);

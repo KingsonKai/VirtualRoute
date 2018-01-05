@@ -13,6 +13,7 @@ using namespace std;
 #include "RouteTableCode/RouteTableLS.cpp"
 #include "virtualPacket.cpp"
 #define PORT 8080
+#define cneterPORT 8888
 
 char ip[SIZE] = "127.000.000.001";
 char centerIP[SIZE] = "127.000.000.001";
@@ -32,14 +33,6 @@ public:
 	char name;
 	int port;                     // 端口号
 
-    /*
-	// DV
-	RouteTableDV table;			   //RouteTableLS table;
-    */
-
-	// LS
-	RouteTableLS table;
-
 	SOCKET sock;              // socket模块
 	sockaddr_in sockAddr;         // 绑定的socket地址
 	sockaddr_in sockClient;
@@ -52,7 +45,6 @@ public:
 		strcpy(this->localaddr, localaddr);
 		this->port = port;
 		this->name = name;
-		table = RouteTableLS(name);
 		WSADATA wsaData;
 		WSAStartup(MAKEWORD(2, 2), &wsaData);
 		sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -91,19 +83,17 @@ public:
 		Addr dst('1', dstip);
 		virtualPacket normalPacket(0, local, dst, NULL);
 		normalPacket.constructNormalPacket(sendMessage, message);
-		sendPacket(sendMessage, table.getNextHop(dst));
+		sendPacket(sendMessage, getNextHop(dst));
 	}
 
 	// 向其他路由路由器发送心跳监测包，监测邻居是否被down掉
 	void sendHeartBeatPacket() {
-		for (auto addr : table.getNeighbors()) {
-			char sendMessage[MAXBYTE];
-			Addr local(name, localaddr);
-			Addr dst(addr.name, addr.ipaddress);
-			virtualPacket heartbeatPacket(2, local, dst, NULL);
-			heartbeatPacket.constructHeartBeatPacket(sendMessage);
-			sendPacket(sendMessage, table.getNextHop(dst));
-		}
+        char sendMessage[MAXBYTE];
+        Addr local(name, localaddr);
+        Addr dst('O', centerIP);
+        virtualPacket heartbeatPacket(2, local, dst, NULL);
+        heartbeatPacket.constructHeartBeatPacket(sendMessage);
+        sendPacket(sendMessage, dst.ipaddress);
 	}
 
 	// 发送回响信息，表明是否收到了这个包
@@ -115,21 +105,17 @@ public:
 		char message[MAXBYTE];
 		strcpy(message, RESPONSE);
 		responsePacket.constructResponsePacket(sendMessage, message);
-		cout << sendMessage << endl;
 		sendPacket(sendMessage, dst.ipaddress);
 	}
 
 	// LS
 	// down包只发送给邻居
 	void sendDownPacket(Addr downHost) {
-		for (auto addr : table.getNeighbors()) {
-			char sendMessage[MAXBYTE];
-			Addr dst(addr.name, addr.ipaddress);
-			virtualPacket downPacket(4, downHost, dst, NULL);
-			downPacket.constructDownPacket(sendMessage);
-			// 目的地是邻居，目的IP直接填目的地址
-			sendPacket(sendMessage, dst.ipaddress);
-		}
+        char sendMessage[MAXBYTE];
+        Addr dst('0', centerIP);
+        virtualPacket downPacket(4, downHost, dst, NULL);
+        downPacket.constructDownPacket(sendMessage);
+        sendPacket(sendMessage, dst.ipaddress);
 	}
 
 	// 处理接收的包，根据packet类型调用以下四种处理方式
@@ -173,7 +159,7 @@ public:
 	// 转发普通的包
 	void forward(virtualPacket packet) {
 	    cout << "From " << packet.getSource().ipaddress <<  "Forward To: " << packet.getDst().ipaddress << endl;
-		sendPacket(packet.getRecvBuf(), table.getNextHop(packet.getDst()));
+		sendPacket(packet.getRecvBuf(), getNextHop(packet.getDst()));
 	}
 
 	// 处理响应包
@@ -191,6 +177,10 @@ public:
 
 		sendto(sock, sendMessage, strlen(sendMessage), 0, (SOCKADDR*)&addr_Server, sizeof(SOCKADDR));
 		return addr_Server;
+	}
+
+	char *getNextHop(Addr a) {
+
 	}
 
 	~controller() {
