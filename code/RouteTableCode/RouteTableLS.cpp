@@ -96,7 +96,7 @@ public:
 	bool setDown(Addr a) {
 		bool is = false;
 		for (int i = 0; i < hostAddrs.size(); i++) {
-			if (hostAddrs[i] == a) {
+			if (hostAddrs[i].name == a.name && a.name != myHostName) {
 				is = true;
 				break;
 			}
