@@ -341,9 +341,11 @@ void *down(void *args) {
 }
 
 void *heartBeat(void *args) {
-    Sleep(2000);
-    c.sendHeartBeatPacket();
-    c.checkNeighbor();
+    while(1) {
+        Sleep(2000);
+        c.sendHeartBeatPacket();
+        c.checkNeighbor();
+    }
 }
 
 int main() {
