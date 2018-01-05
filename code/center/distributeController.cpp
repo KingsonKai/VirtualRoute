@@ -219,19 +219,6 @@ void *start(void *args) {
     c.run();
 }
 
-void *send(void *args) {
-    while (1) {
-        Sleep(5000);
-        srand((unsigned)time(NULL));
-
-        int n = rand() % 5;
-        while (n == localname - 'A') {
-            n = rand() % 5;
-        }
-        c.sendNormalPacket(hostAddrs[n].ipaddress, "TEST PACKET");
-    }
-}
-
 void *down(void *args) {
     Sleep(10000);
     c.sendDownPacket(Addr(localname, ip));
@@ -262,17 +249,13 @@ int main() {
 
 	pthread_create(&tids[0], NULL, start, NULL);
 
-	// 线程2
-    // 每隔5s发一次普通包
-	pthread_create(&tids[1], NULL, send, NULL);
-
 
     // 线程3, 发送down包
 	//pthread_create(&tids[2], NULL, down, NULL);
 
 
     // DV算法的发送心跳包
-	pthread_create(&tids[3], NULL, heartBeat, NULL);
+	// pthread_create(&tids[3], NULL, heartBeat, NULL);
 
     pthread_mutex_destroy(&work_mutex);
     pthread_exit(NULL);

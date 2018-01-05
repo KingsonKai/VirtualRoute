@@ -6,8 +6,7 @@
 #include<iterator>
 using namespace std;
 
-class RouteTableLS
-{
+class RouteTableLS {
 public:
 	vector<routeTableEntry> routetable;
 	// 存储网络拓补图的链路信息，char类型为主机的名字ABCD

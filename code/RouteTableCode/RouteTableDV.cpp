@@ -201,6 +201,13 @@ public:
                 return addr.name;
         }
 	}
+    vector<Addr> getNeighbors() {
+		vector<Addr> my_neighbors;
+		for (int i = 0; i < networkGraph[myHostName].size(); i++) {
+			my_neighbors.push_back(networkGraph[myHostName][i].addr2);
+		}
+		return my_neighbors;
+	}
 	/*
 	bool setdown(char a) {
 	vector<vector<int>> origin_table;
