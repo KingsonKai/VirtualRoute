@@ -10,12 +10,12 @@
 // vs 忽略strcpy安全性问题
 #pragma warning(disable:4996)
 using namespace std;
-#include "RouteTableCode/RouteTableLS.cpp"
+#include "RouteTableCode/RouteTableDV.cpp"
 #include "virtualPacket.cpp"
 #define PORT 8080
 
 
-char ip[SIZE] = "192.168.193.103";
+char ip[SIZE] = "192.168.199.103";
 char localname = 'A';
 
 
@@ -33,14 +33,10 @@ public:
 	char name;
 	int port;                     // 端口号
 
-    /*
-	// DV
-	std::vector<route> routelist;  // 邻居路由表
-	RouteTableDV table;			   //RouteTableLS table;
-    */
+	RouteTableDV table;
 
 	// LS
-	RouteTableLS table;
+    //RouteTableLS table;
 
 	SOCKET sock;              // socket模块
 	sockaddr_in sockAddr;         // 绑定的socket地址
@@ -57,7 +53,7 @@ public:
 		strcpy(this->localaddr, localaddr);
 		this->port = port;
 		this->name = name;
-		table = RouteTableLS('A');
+		table = RouteTableDV('A');
 		WSADATA wsaData;
 		WSAStartup(MAKEWORD(2, 2), &wsaData);
 		sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -95,9 +91,9 @@ public:
 			double timeDiff = difftime(currentTime, p.second);
 			if (timeDiff > 2.0) {
                 cout << "Router is down: " << table.getHostName(p.first.ipaddress) << endl;
-				if (table.setDown(p.first)) {
+				if (table.setdown(table.getHostName(p.first.ipaddress))) {
 					isChange = true;
-					sendDownPacket(p.first);
+					//sendDownPacket(p.first);
 					table.print();
 				}
 			}
@@ -121,8 +117,6 @@ public:
 		sendPacket(sendMessage, table.getNextHop(dst));
 	}
 
-    /*
-	// 发送路由表信息,只发给邻居
 	void sendUpdatePacket() {
 		for (auto addr : table.getNeighbors()) {
 			char sendMessage[MAXBYTE];
@@ -130,11 +124,11 @@ public:
 			Addr dst(addr.name, addr.ipaddress);
 			virtualPacket updatePacket(1, local, dst, NULL);
 			// 向邻居发送更新的距离矢量
-			updatePacket.constructRouterInfoPacket(sendMessage, table.get_my_dis_vector(dst.ipaddress));
+			updatePacket.constructRouterInfoPacket(sendMessage, table.get_my_dis_vector(table.getHostName(dst.ipaddress)));
+			cout << "Send Update Packet: " << sendMessage << endl;
 			sendPacket(sendMessage, table.getNextHop(dst));
 		}
 	}
-	*/
 
 	// 向其他路由路由器发送心跳监测包，监测邻居是否被down掉
 	void sendHeartBeatPacket() {
@@ -162,6 +156,7 @@ public:
 
 	// LS
 	// down包只发送给邻居
+	/*
 	void sendDownPacket(Addr downHost) {
 		for (auto addr : table.getNeighbors()) {
 			char sendMessage[MAXBYTE];
@@ -172,6 +167,7 @@ public:
 			sendPacket(sendMessage, dst.ipaddress);
 		}
 	}
+	*/
 
 	// 处理接收的包，根据packet类型调用以下四种处理方式
 	void handleReceivedPacket(char *recvBuf) {
@@ -223,20 +219,19 @@ public:
 	调用DV算法更新路由表
 	向邻居转发更新信息
 	*/
-	/*
 	void handleUpdatePacket(virtualPacket packet) {
 		char source[20];
 		char dst[20];
 		strcpy(dst, packet.getDst().ipaddress);
 		strcpy(source, packet.getSource().ipaddress);
 		if (strcmp(dst, localaddr) == 0) {
+            cout << "Received Update Packet From " << packet.getSource().ipaddress << " " << packet.message << endl;
 			vector<int> disVector = packet.analyzeUpdatePacket();
 			if (table.DValgorithm(disVector, table.getHostName(source))) {
 				sendUpdatePacket();
 			}
 		}
 	}
-	*/
 
 	// 处理心跳检测包
 	void handleHeartBeatPacket(virtualPacket packet) {
@@ -271,6 +266,7 @@ public:
 	根据接收到的down包更新自己的路由表
 	并将自己的更新信息转发
 	*/
+	/*
 	void handleDownPacket(virtualPacket packet) {
 		char source[20];
 		char dst[20];
@@ -283,26 +279,28 @@ public:
 				forwardDownPacket(packet);
 			}
 		}
-
 	}
+	*/
 
 	// LS
 	/* 转发Down包给邻居
 	源IP地址不变,改变目的IP地址
 	*/
+	/*
 	void forwardDownPacket(virtualPacket packet) {
 		for (auto addr : table.getNeighbors()) {
 			packet.changeDstIP(addr.ipaddress);
 			sendPacket(packet.getRecvBuf(), addr.ipaddress);
 		}
 	}
+	*/
 
 	void sendPacket(char *sendMessage, char *dst) {
 	    if (strcmp(dst, "0.0.0.0") == 0) {
             cout << "Can't reach! Maybe it's down" << endl;
             return;
 	    }
-	    cout << "Send TO: " << table.getHostName(dst) << " Content: " << sendMessage << endl;
+	    cout << "Send TO: " << table.getHostName(dst) << " IP : " << dst << " Content: " << sendMessage << endl;
 		SOCKADDR_IN addr_Server; //服务器的地址等信息
 		addr_Server.sin_family = AF_INET;
 		addr_Server.sin_port = htons(PORT);
@@ -339,7 +337,6 @@ void *send(void *args) {
         srand((unsigned)time(NULL));
 
         int n = rand() % 5;
-        cout << n << endl;
         while (n == localname - 'A') {
             n = rand() % 5;
         }
@@ -347,18 +344,13 @@ void *send(void *args) {
     }
 }
 
-void *down(void *args) {
-    Sleep(10000);
-    c.sendDownPacket(Addr(localname, ip));
-}
-
 void *heartBeat(void *args) {
     int n = 0;
     while(1) {
         n++;
-        Sleep(2000);
+        Sleep(5000);
         c.sendHeartBeatPacket();
-        if (n > 20)
+        if (n > 5)
             c.checkNeighbor();
     }
 }

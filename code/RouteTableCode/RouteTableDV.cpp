@@ -8,8 +8,8 @@
 #pragma warning(disable:4996)
 #include "../DataStructure.cpp"
 using namespace std;
-class RouteTableDV
-{
+
+class RouteTableDV {
 public:
 	vector<routeTableEntry> routetable;//目标，下一跳，cost
 	vector<vector<int>> myTable; // 路由选择表
@@ -17,16 +17,23 @@ public:
 	map<char, vector<pathInfo>> networkGraph;//只有自己到自己邻居的边
 	vector<Addr> hostAddrs; // IP和地址的映射
 	char myHostName;//本机主机名
-	RouteTableDV(char name = 'D') {
+	RouteTableDV(char name = 'A') {
 		myTable = vector<vector<int>>(5, vector<int>(5, 9999));
 		Dis_vector = vector<int>(5, 9999);
 		myHostName = name;
+
 		//获取所有hostAddrs,0对应A的信息
-		hostAddrs.push_back(Addr('A', "192.168.199.198"));
-		hostAddrs.push_back(Addr('B', "192.168.199.122"));
-		hostAddrs.push_back(Addr('C', "192.168.199.160"));
-		hostAddrs.push_back(Addr('D', "192.168.199.231"));
-		hostAddrs.push_back(Addr('E', "192.168.199.198"));
+		char ipA[SIZE] = "192.168.199.103";
+		char ipB[SIZE] = "192.168.199.122";
+		char ipC[SIZE] = "192.168.199.160";
+		char ipD[SIZE] = "192.168.199.231";
+		char ipE[SIZE] = "192.168.199.198";
+		hostAddrs.push_back(Addr('A', ipA));
+		hostAddrs.push_back(Addr('B', ipB));//赋值后是多少位
+		hostAddrs.push_back(Addr('C', ipC));
+		hostAddrs.push_back(Addr('D', ipD));
+		hostAddrs.push_back(Addr('E', ipE));
+
 		//初始自己的路由表
 		if (myHostName == 'A') {
 			networkGraph['A'] = vector<pathInfo>{
@@ -211,39 +218,38 @@ public:
 		}
 		return my_neighbors;
 	}
-	/*
-	bool setdown(char a) {
-	vector<vector<int>> origin_table;
-	copy(origin_table, myTable);
-	myTable[myHostName-'A'][a - 'A'] = 9999;
-	for (int i = 0; i < hostAddrs.size(); i++) {
-	if (i != a - 'A')
-	myTable[a - 'A'][i] = 9999;
-	else
-	myTable[a - 'A'][i] = 0;
-	}
-	vector<int> new_nei_dis = vector<int>(hostAddrs.size(), 9999);
-	new_nei_dis[a - 'A'] = 0;
-	vector<pathInfo>::iterator iter;
-	for (iter = networkGraph[myHostName - 'A'].begin(); iter != networkGraph[myHostName - 'A'].end(); iter++) {
-	if (iter->addr2.name == a) {
-	iter->cost = 9999;
-	break;
-	}
-	}
-	vector <routeTableEntry>().swap(routetable);
-	DValgorithm(new_nei_dis, a);
-	if (origin_table == myTable) {
-	return false;
-	}
-	else {
-	return true;
-	}
-	}
-	*/
-	};
-	/*
 
+	bool setdown(char a) {
+        vector<vector<int>> origin_table;
+        copy(origin_table, myTable);
+        myTable[myHostName-'A'][a - 'A'] = 9999;
+        for (int i = 0; i < hostAddrs.size(); i++) {
+            if (i != a - 'A')
+                myTable[a - 'A'][i] = 9999;
+            else
+                myTable[a - 'A'][i] = 0;
+        }
+        vector<int> new_nei_dis = vector<int>(hostAddrs.size(), 9999);
+        new_nei_dis[a - 'A'] = 0;
+        vector<pathInfo>::iterator iter;
+        for (iter = networkGraph[myHostName - 'A'].begin(); iter != networkGraph[myHostName - 'A'].end(); iter++) {
+            if (iter->addr2.name == a) {
+                iter->cost = 9999;
+                break;
+            }
+        }
+        vector <routeTableEntry>().swap(routetable);
+        DValgorithm(new_nei_dis, a);
+        if (origin_table == myTable) {
+            return false;
+        }
+        else {
+            return true;
+        }
+	}
+
+};
+	/*
 	int main() {
 	cout << "hello world" << endl;
 	RouteTableDV routeA = RouteTableDV('A');
