@@ -14,7 +14,7 @@ public:
 	vector<Addr> hostAddrs;  //方便主机名和ip地址的转换
 	char myHostName;//本机主机名
 	vector<char> have_delete;
-	RouteTableLS(char name = 'D') {
+	RouteTableLS(char name = 'A') {
 		myHostName = name;
 		//获取所有hostAddrs,0对应A的信息
 		char ipA[SIZE] = "192.168.199.103";

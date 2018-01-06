@@ -15,8 +15,8 @@ using namespace std;
 #define PORT 8080
 
 
-char ip[SIZE] = "192.168.199.231";
-char localname = 'D';
+char ip[SIZE] = "192.168.193.103";
+char localname = 'A';
 
 
 // controller
@@ -57,7 +57,7 @@ public:
 		strcpy(this->localaddr, localaddr);
 		this->port = port;
 		this->name = name;
-		table = RouteTableLS('D');
+		table = RouteTableLS('A');
 		WSADATA wsaData;
 		WSAStartup(MAKEWORD(2, 2), &wsaData);
 		sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -94,11 +94,11 @@ public:
 		for (auto p : heartBeatTimetable) {
 			double timeDiff = difftime(currentTime, p.second);
 			if (timeDiff > 2.0) {
-                cout << "Router is down: " << p.first.ipaddress << endl;
+                cout << "Router is down: " << table.getHostName(p.first.ipaddress) << endl;
 				if (table.setDown(p.first)) {
 					isChange = true;
 					sendDownPacket(p.first);
-
+					table.print();
 				}
 			}
 		}
@@ -144,7 +144,7 @@ public:
 			Addr dst(addr.name, addr.ipaddress);
 			virtualPacket heartbeatPacket(2, local, dst, NULL);
 			heartbeatPacket.constructHeartBeatPacket(sendMessage);
-			sendPacket(sendMessage, table.getNextHop(dst));
+			sendPacket(sendMessage, dst.ipaddress);
 		}
 	}
 
@@ -242,6 +242,7 @@ public:
 	void handleHeartBeatPacket(virtualPacket packet) {
 		// 若有收到，回应主机，目前正在工作
 		if (strcmp(packet.getDst().ipaddress, localaddr) == 0) {
+            cout << packet.getSource().ipaddress << " Heart Beat" << endl;
 			time_t receiveTime;
 			time(&receiveTime);
 			Addr sourceAddr = packet.getSource();
@@ -338,6 +339,7 @@ void *send(void *args) {
         srand((unsigned)time(NULL));
 
         int n = rand() % 5;
+        cout << n << endl;
         while (n == localname - 'A') {
             n = rand() % 5;
         }
@@ -356,7 +358,7 @@ void *heartBeat(void *args) {
         n++;
         Sleep(2000);
         c.sendHeartBeatPacket();
-        if (n > 5)
+        if (n > 20)
             c.checkNeighbor();
     }
 }
