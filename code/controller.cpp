@@ -53,7 +53,7 @@ public:
 		strcpy(this->localaddr, localaddr);
 		this->port = port;
 		this->name = name;
-		table = RouteTableDV('A');
+		table = RouteTableDV(name);
 		WSADATA wsaData;
 		WSAStartup(MAKEWORD(2, 2), &wsaData);
 		sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);

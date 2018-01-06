@@ -15,10 +15,10 @@ using namespace std;
 #define PORT 8080
 #define centerPORT 8888
 
-char ip[SIZE] = "127.000.000.001";
-char centerIP[SIZE] = "127.000.000.001";
+char ip[SIZE] = "192.168.199.103";
+char centerIP[SIZE] = "192.168.199.103";
 char localname = 'A';
-pthread_mutex_t work_mutex;   // 声明互斥变量
+vector<Addr> hostAddrs;
 
 // controller
 // 接收packet，如果刚是给自己的，解析，否则转发
@@ -36,10 +36,6 @@ public:
 
 	SOCKET sock;              // socket模块
 	sockaddr_in sockAddr;         // 绑定的socket地址
-
-
-	// 最后一次收到邻居发送的心跳包的时间
-	vector<pair<Addr, time_t>> heartBeatTimetable;
 
 	controller(char *localaddr, char name, int port) {
 		strcpy(this->localaddr, localaddr);
@@ -70,8 +66,8 @@ public:
 			int ret = recvfrom(sock, recvBuf, MAXBYTE, 0, (SOCKADDR*)&sockClient, &nSize);
 			if (ret > 0) {
 			    recvBuf[ret] = '\0';
-			    cout << recvBuf << endl;
-                cout << strlen(recvBuf) << endl;
+			    //cout << recvBuf << endl;
+                //cout << strlen(recvBuf) << endl;
 				handleReceivedPacket(recvBuf);
 			}
 			// getPack or forward packet
@@ -144,7 +140,7 @@ public:
 	*/
 	void handleNormalPacket(virtualPacket packet) {
 		if (strcmp(packet.getDst().ipaddress, localaddr) == 0) {
-			packet.print();
+			cout << "Receive Normal Packet From " << getHostName(packet.getSource().ipaddress) << endl;
 			sendResponsePacket(packet.getSource().ipaddress, "I have received");
 		}
 		else {
@@ -154,14 +150,14 @@ public:
 
 	// 转发普通的包
 	void forward(virtualPacket packet) {
-	    cout << "From " << packet.getSource().ipaddress <<  "Forward To: " << packet.getDst().ipaddress << endl;
+	    cout << "From " << getHostName(packet.getSource().ipaddress) <<  "Forward To: " << getHostName(packet.getDst().ipaddress) << endl;
 		sendPacket(packet.getRecvBuf(), getNextHop(packet.getDst()));
 	}
 
 	// 处理响应包
 	void handleResponsePacket(virtualPacket packet) {
 		if (strcmp(packet.getDst().ipaddress, localaddr) == 0) {
-			cout << "packet to IP : " << packet.getSource().ipaddress << " is received" << endl;
+			cout << "packet to IP : " << getHostName(packet.getSource().ipaddress) << " is received" << endl;
 		}
 	}
 
@@ -169,6 +165,7 @@ public:
 	    if (strcmp(dst, "0.0.0.0") == 0) {
             cout << "Can't reach! Maybe it's down" << endl;
 	    }
+	    cout << "Send TO: " << getHostName(dst) << " IP : " << dst << " Content: " << sendMessage << endl;
 		SOCKADDR_IN addr_Server; //服务器的地址等信息
 		addr_Server.sin_family = AF_INET;
 		addr_Server.sin_port = htons(PORT);
@@ -204,6 +201,13 @@ public:
         return addr_Server;
 	}
 
+	char getHostName(char *ip) {
+        for (auto addr : hostAddrs) {
+            if (strcmp(addr.ipaddress, ip) == 0)
+                return addr.name;
+        }
+	}
+
 	~controller() {
 		closesocket(sock);
 		WSACleanup();
@@ -212,7 +216,6 @@ public:
 };
 
 controller c(ip, localname, PORT);
-vector<Addr> hostAddrs;
 
 void *start(void *args) {
     c.listen();
@@ -230,11 +233,11 @@ void *heartBeat(void *args) {
 }
 
 void ini() {
-    char ipA[SIZE] = "172.018.157.159";
-    char ipB[SIZE] = "172.018.156.076";
-    char ipC[SIZE] = "172.018.159.066";
-    char ipD[SIZE] = "172.018.159.150";
-    char ipE[SIZE] = "172.018.158.165";
+    char ipA[SIZE] = "192.168.199.103";
+    char ipB[SIZE] = "192.168.199.122";
+    char ipC[SIZE] = "192.168.199.160";
+    char ipD[SIZE] = "192.168.199.231";
+    char ipE[SIZE] = "192.168.199.198";
     hostAddrs.push_back(Addr('A', ipA));
     hostAddrs.push_back(Addr('B', ipB));//赋值后是多少位
     hostAddrs.push_back(Addr('C', ipC));
