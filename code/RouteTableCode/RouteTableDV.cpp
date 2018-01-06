@@ -167,11 +167,14 @@ public:
 	}
 
 	void print() {
+	    cout << "-------------------------" << endl;
 		for (auto v : routetable) {
 			cout << "destName: " << v.addr.name << endl;
 			cout << "NExtIP: " << v.nexthop << endl;
 			cout << "Cost: " << v.cost << endl;
 		}
+
+		cout << "-------------------------" << endl;
 	}
 
 	void copy(vector<vector<int>> &v1, vector<vector<int>> &v2) {

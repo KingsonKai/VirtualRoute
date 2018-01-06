@@ -102,7 +102,7 @@ public:
 	bool setDown(Addr a) {
 		bool is = false;
 		for (int i = 0; i < hostAddrs.size(); i++) {
-			if (hostAddrs[i] == a) {
+			if (hostAddrs[i] == a && a.name != myHostName) {
 				have_delete.push_back(a.name);
 				is = true;
 				break;
@@ -177,12 +177,14 @@ public:
 		}
 	}
 	void print() {
-		for (auto a : routetable) {
-			cout << "目的地址：" << a.addr.name << endl;
-			cout << "下一跳路由器：" << a.nexthop << endl;
-			cout << "代价：" << a.cost << endl;
+	    cout << "-------------------------" << endl;
+		for (auto v : routetable) {
+			cout << "destName: " << v.addr.name << endl;
+			cout << "NExtIP: " << v.nexthop << endl;
+			cout << "Cost: " << v.cost << endl;
 		}
-		cout << "-----------------------------------" << endl;
+
+		cout << "-------------------------" << endl;
 	}
 	int index_sub(vector<char> have_delete, char a) {
 		int dis = 0;

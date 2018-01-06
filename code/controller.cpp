@@ -94,7 +94,7 @@ public:
 		for (auto p : heartBeatTimetable) {
 			double timeDiff = difftime(currentTime, p.second);
 			if (timeDiff > 2.0) {
-                cout << "Router is down" << p.first.ipaddress << endl;
+                cout << "Router is down: " << p.first.ipaddress << endl;
 				if (table.setDown(p.first)) {
 					isChange = true;
 					sendDownPacket(p.first);
