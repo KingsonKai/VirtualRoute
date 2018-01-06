@@ -248,9 +248,7 @@ int main() {
 
 	pthread_create(&tids[0], NULL, start, NULL);
 
-
-    // DV算法的发送心跳包
-	// pthread_create(&tids[3], NULL, heartBeat, NULL);
+	pthread_create(&tids[3], NULL, heartBeat, NULL);
 
     pthread_exit(NULL);
 
