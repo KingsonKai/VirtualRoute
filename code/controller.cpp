@@ -351,10 +351,13 @@ void *down(void *args) {
 }
 
 void *heartBeat(void *args) {
+    int n = 0;
     while(1) {
+        n++;
         Sleep(2000);
         c.sendHeartBeatPacket();
-        c.checkNeighbor();
+        if (n > 5)
+            c.checkNeighbor();
     }
 }
 

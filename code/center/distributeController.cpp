@@ -219,14 +219,14 @@ void *start(void *args) {
     c.run();
 }
 
-void *down(void *args) {
-    Sleep(10000);
-    c.sendDownPacket(Addr(localname, ip));
-}
-
 void *heartBeat(void *args) {
-    Sleep(2000);
-    c.sendHeartBeatPacket();
+    int n = 0;
+    while(1) {
+        n++;
+        Sleep(2000);
+        if (n > 5)
+            c.sendHeartBeatPacket();
+    }
 }
 
 void ini() {
@@ -245,19 +245,13 @@ void ini() {
 int main() {
     ini();
     pthread_t tids[5];
-    pthread_mutex_init(&work_mutex, NULL);
 
 	pthread_create(&tids[0], NULL, start, NULL);
-
-
-    // 线程3, 发送down包
-	//pthread_create(&tids[2], NULL, down, NULL);
 
 
     // DV算法的发送心跳包
 	// pthread_create(&tids[3], NULL, heartBeat, NULL);
 
-    pthread_mutex_destroy(&work_mutex);
     pthread_exit(NULL);
 
     return 0;
